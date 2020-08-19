@@ -878,9 +878,9 @@ wsgirequest对象常用的只读属性：
 
 - request.method:请求的方法
 
-- request.GET:一个diango.http.request.querydict对象，包含了通过查询字符串传递过来的数据
+- request.GET:一个diango.HttpRequest.querydict对象，包含了通过查询字符串传递过来的数据
 
-- requeest.POST:同样是一个diango.http.request.querydict对象,包含了表单提交过来的一些数据
+- requeest.POST:同样是一个diango.HttpRequest.querydict对象,包含了表单提交过来的一些数据
 
 - request.FILES：一个diango.http.request.querydict对象，这个属性包含了所有上传的文件数据
 
@@ -1601,5 +1601,283 @@ models.FileField(upload_to='%Y/%m/%d',validators=[validators.FileExtensionValida
 
 ### 19.2 安装
 
+## 二十. session和cookie
 
+- cookie:在web中，http请求是无状态的，也就是说每一次客户端和服务器连接都是全新的，cookie的出现就是解决了这个问题，第一次登入服务器后，会返回一些cookie给浏览器，然后浏览器就保存在本地。当第二次请求时就带上这个cookie，那么服务器就通过这个cookie可以判断当前用户是谁了。
 
+  但是cookie能存储的数据有限，而且不同浏览器有不同的存储大小。一般不超过4k,所以cookie只能存储一些小数据。
+
+- session:类似cookie，也是为了存用户相关的数据。不同的是，session是存在服务器，不同的服务器，框架，语言有不同的实现，session主要是为了解决数据不安全的问题
+- cookie和session结合使用：
+  - 存储在服务端：通过cookie存储一个sessionid，具体的数据是保存在session中。如果用户已经登入，服务器会在cookie中保存一个sessionid，下次浏览器再请求时候，就会携带这个sessionid。服务器根据sessionid到数据库中去找用户的session数据。就可以知道session是谁了，以及之前存的状态信息。这种方式叫做server side session
+  - 将session数据加密，然后存在cookie中。这种方式叫client side session。flask框架采用的就是这种方式
+
+### 20.1 django操作cookie和session:
+
+- cookie是设置给浏览器的，所以需要通过response来传输这个数据，所以通过response.set_cookie来设置，相关参数：
+  - key：cookie的key
+  - value:cookie的值
+  - max_age：cookie有效时间，单位是s
+  - expires：过期时间，具体的日期，datetime。如果同时设置了max_age和expires,那么会采用expires的值
+  - path：对域名下哪些路径有效，默认是域名下全部有效
+    - path = '/路径/'
+  - domain：针对哪个域名有效。默认是针对主域名下都有效，如果要针对子域名，那就可以设置这个属性
+  - secure：是否是安全，如果设置为True，那就只能再https协议下才能使用
+  - httponly:默认是false，如果为true，那就在客户端不能通过javascript进行操作
+
+- 删除cookie：
+
+  - 通过delete_cookie即可删除cookie,实际上删除cookie就是将指定的cookie值设为空字符串，过期时间设为0，也就是浏览器关闭就过期
+
+- 获取cookie：获取是通过request来获取的，返回的是一个字典
+
+  - ```python
+    cookies = request.COOKIES
+    for cookie_key,cookie_value in cookies.items():
+        print(cookie_key,cookie_value)
+    ```
+
+- 操作  session,request.session.get('username')
+
+  - request.session['username'] = 'zhiliao' 设置session数据，这些数据会存到django_session表中，这个表模型已经在默认的app中存在了，所以只要完成迁移就可以直接使用，不用我们再建模型
+  - get:用来从session中获取指定值
+  - pop(字段):用来从session中删除一个值
+  - keys()：从session中获取所有键
+  - items()：从session中获取所有值
+  - clear():删除session并且删除在浏览器中存储的session_id，注销时候用得比较多.flush()方法会把所有的清空
+  - set_expiry(value)L设置过期时间
+    - 整形：多少秒
+    - 0：浏览器关闭就过期
+    - None：使用全局中setting.py里设置的SESSION_COOKIE_AGE来配置全局过期时间，默认是2周
+  - clear_expired:清楚过期的session。django不会自动清除过期的session，需要定期手动清除，或者是在终端shell，使用 python manage.py clearsession来清除过期session
+
+### 20.2 修改session的存储机制
+
+session 默认是存在数据库中的django_session表，也可以存到其他地方。通过设置SESSION_ENGINE来指定存储位置，有以下几种方案：
+
+1. django.contrib.sessions.backends.db：默认数据库
+2. django.contrib.sessions.backends.file:使用文件来存
+3. django.contrib.sessions.backends.cacher：使用缓存来存储，前提是必须要在setting里设置号caches,并且需要用memcached，而不能使用纯内存作为缓存
+4. django.contrib.sessions.backends.cached_db：既使用缓存，也使用数据库。存数据时，先存到缓存，再存到数据库。这样可以保证缓存系统出现问题，session数据也不会丢失，还存在数据库里。当取数据时，先到缓存里去找，找不到再到数据找
+5. django.contrib.sessions.backends.signed_cookies：将session信息加密后存到浏览器的cookies中，这种方式不一定安全，建议设置SESSION_COOKIE_HTTPONLY=True，就不能通过js来获取session数据，并且还需要对setttings中的secret_key进行保密，别人一旦知道这个key，就可以用来解密。数据大小不能超过4k
+
+## 二一.上下文处理器
+
+上下文处理器可以返回一些数据，在全局中使用，比如用户登入的用户信息，在很多页面中都可以使用，就是因为用户信息存在上下文处理器中了。所以我们把公用的数据放在上下文中，就没必要再每个视图函数中返回这个数据。
+
+案例：
+
+```tex
+比如登入功能，正常的网站只要登入了，那么在导航栏这些位置原本的登入按钮就会显示用户信息。这个功能就是通过session+上下文处理器来实现的
+```
+
+```python
+#根本的做法是在每个视图函数中都需要取一次session
+def index(request):
+    user_id = request.session.get('user_id')#前提是在登入时候，已经通过request.session['user_id']=变量在django_session中建立了一个信息
+    context = {}
+    try:
+        user = User.objects.get(pk = user_id)
+        context['front_user'] = user
+    except：
+    	pass
+    return render(request,'index.html'.context)
+```
+
+更好的做法是使用上下文处理器，就不需要在每个函数中再取了，下面是自定义上下文处理的步骤
+
+1. 在app目录下创建一个context_processors.py文件
+
+   ```python
+   def app_user(request):
+       user_id = request.session.get('user_id')
+       context = {}
+       if user_id:
+           try:
+               user = User.objects.get(pk = user_id)
+               context['front_user'] = user
+           except:pass
+       return context
+   ```
+
+2. 在setttings.py的templates    opptions中加入
+
+   ```python
+   'OPTIONS': {
+       'context_processors': [
+           'django.template.context_processors.debug',
+           'django.template.context_processors.request',
+           'django.contrib.auth.context_processors.auth',
+           'django.contrib.messages.context_processors.messages',
+           'front.context_processors.app_user'
+       ],
+   ```
+
+3. 在模板中可以直接使用front_user这个对象，就不需要在每个视图函数中写一遍
+
+### 21.1 内置的上下文处理器，模板变量
+
+在setting.TEMPLATES.OPTIONS.context_processors中，有许多内置的上下文处理器。这些处理器的作用如下：
+
+- django.template.context_processors.debug:增加一个debug和sql_requires变量，在模板中可以通过他来看一些数据库查询
+
+  - ```python
+    def debug(request):
+        """
+        Return context variables helpful for debugging.
+        """
+        context_extras = {}
+        if settings.DEBUG and request.META.get('REMOTE_ADDR') in settings.INTERNAL_IPS:
+            context_extras['debug'] = True
+            from django.db import connections
+            # Return a lazy reference that computes connection.queries on access,
+            # to ensure it contains queries triggered after this function runs.
+            context_extras['sql_queries'] = lazy(
+                lambda: list(itertools.chain.from_iterable(connections[x].queries for x in connections)),
+                list
+            )
+        return context_extras
+    ```
+
+  - 源码意思是只要deburg开启并且在内部ip池里，那么我们就可以在模板中使用deburg和sql_queries（在视图函数里面有了查询操作才能使用这个变量）
+
+- django.template.context_processors.request:增加一个request变量。这个request变量也就是在视图函数的第一个参数。
+
+- django.template.context_processors.auth：Djangon内置的用户系统，增加一个user对象
+
+- django.template.context_processors.messages：增加一个messagges变量
+
+  1. 现在视图函数中使用message
+
+     ```python
+     from django.contrib import messages
+     def index(request):
+         messages.info(request,'需要传的消息') #这个message不需要用context通过render返回，可以直接在模板中使用，因为上下文处理器的存在
+         return render(request,)
+     ```
+
+     ```html
+     {% for message in messages %}
+     {{message}}
+     {% endfor %}
+     ```
+
+- django.template.context_processors.media：在模板中可以读取MEDIA_URL,比如想要在模板中使用上传的文件，那么这时候就需要使用settings.py中设置的MEDIA_URL来凭借url，
+
+  ```html
+  <img src="{{MEDIA_URL}}{{user.avatar}}" /> user.avator里面是相对media的相对路径
+  ```
+
+- django.template.context_processors.static:使用STATIC_URL
+
+- django.template.context_processors.csfr：使用csrf_token来生成一个csrf令牌，主要在表单中使用。
+
+  - ```html
+    <input type="hidden" name="csrfmiddlewaretoken"  value = "{{csrf_token}}">
+    ```
+
+  - 也可以用{% csrf_token %} ，这个标签就是生成了一个上面的input标签（可以在前端页面看到），这个token不一定在form中产生，还可能在head中使用。这个时候就必须要使用{{ csrf_token }}变量，不能使用{% csrf_token %}这个标签了。
+
+## 二二.中间件
+
+中间件是request和response处理过程中的一个插件，比如在request到达视图函数之前，我们可以使用中间件来做一些相关事情，比如可以判断当前用户有没有登入，如果登入了，就绑定一个user对象到request上。也可以在response到达浏览器之前，做一些相关的处理，比如要统一在response上设置一些cookie信息等
+
+### 22.1 自定义中间件
+
+中间件所处的位置没有规定。只要是放到项目当中即可，一般分为两种情况，如果中间件是属于某个app的，那么可以在这个app下创建一个python文件来放这个中间件。也可以专门创建一个python包，用来存放所有的中间件。中间件有两种方式，一种是函数，一种是类
+
+### 22.2 使用函数的中间件
+
+- 在app下写一个middlewares.py文件
+
+```python
+#中间件函数
+def user_middleware(get_response):
+    print('user_middleware') #这是在django启动时候就会运行的初始化代码
+    def middleware(request):
+        print('request到达view函数之前运行')
+        user_id= request.session.get['user_id']
+        if user_id:
+            try:
+				user = User.objects.get(pk = user_id)
+                request.front_user = user   #将user作为request的一个对象，这样就可以就可以在view函数通过request来直接使用登入用户的信息了
+            except:
+                request.front_user = None
+        else:
+            request.front_user = None
+        #下面是response对象到达浏览器之前执行的代码    
+        response = get_response(request)
+        return reponse
+        
+```
+
+- 然后在settings.py中将这个中间件写入
+
+### 22.2 使用类的中间件
+
+```python
+class UserMidder:
+    def __init__(self,get_response):
+        #初始化代码
+        self.get_response = get_response
+        
+    def __call__(self,requst):
+        print('request到达view函数之前运行')
+        user_id= request.session.get['user_id']
+        if user_id:
+            try:
+				user = User.objects.get(pk = user_id)
+                request.front_user = user   #将user作为request的一个对象，这样就可以就可以在view函数通过request来直接使用登入用户的信息了
+            except:
+                request.front_user = None
+        else:
+            request.front_user = None
+        #下面是response对象到达浏览器之前执行的代码    
+        response = self.get_response(request)
+        return reponse
+```
+
+然后再settings.py中注册
+
+### 22.3内置中间件
+
+- django.middleware.common.CommonMiddleware:用于当浏览器中的url不规范（没有/时），通过301重定向的方式到规范的url里。也可以用于防爬虫，处理user-agent
+
+  - ```python
+    #在setttings中配置
+    import re
+    DISALLOWED_USER_AGENTS=[
+        re.compile(r'^\s$|^$'),
+        re.compile(r'.*PhantomJS.*')
+    ]
+    #这段代码是用于防爬虫，伪造User-agent
+    ```
+
+  - 可以直接到.CommonMiddleware源码去看
+
+- gzip中间件，可以压缩页面的字节数量，response的content_type也会变成gzip格式
+
+- django.middleware.security.SecurityMiddleware：做了一些安全处理，比如设置xss防御的请求头，比如一个网站有https协议，那么当用户使用http协议的时候就会自动转https协议。
+
+- django.contrib.sessions.middleware.SessionMiddleware：给request添加一个处理好的session对象
+
+- django.contrib.auth.middleware.AuthenticationMiddleware：给request添加一个user对象
+
+- django.middleware.clickjacking.XFrameOptionsMiddleware：在响应头中添加一个属性response['X-Frame-Option']，让网页不能被其他网站使用iframe标签引用
+
+### 22.4 中间件放置位置
+
+没有依然其他中间件的要放在前面，存在依赖关系的就要注意位置顺序
+
+## 二三. 安全
+
+### 23.1 CSRF攻击
+
+CSRF（cross site request forgery，跨站域请求伪造）是一种网络的攻击方式
+
+原理：网站是通过cookie来实现登陆功能的，而cookie只要存在浏览器中，那么浏览器在访问这个cookie的服务器时，就会自动携带cookie信息到服务器上。有些病毒网站可以在网页源代码中插入js代码，使用js代码给其他服务器发送请求（比如银行的转账请求）。因为在发送请求的时候，浏览器会自动的把cookie发送给服务器，这时候银行的网站就不知道这个请求时伪造的，就会在用户不知情的 情况下，发生转账
+
+### 23.2 XSS攻击 
+
+- 原理：利用网站的漏洞，比如在评论里面提交了一些script语言（<script>alert('hello world')</script>）,浏览器就会跳出一个弹窗。可以利用类似的漏洞在网站页面上插入广告，破坏html的结构
+- 防御：如果不需要显示富文本，那么在渲染用户提交的数据时候，一定要使用转义（django默认开启转义，使用|safe是关闭转义）
