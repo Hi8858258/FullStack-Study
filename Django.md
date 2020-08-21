@@ -1880,4 +1880,91 @@ CSRF（cross site request forgery，跨站域请求伪造）是一种网络的�
 ### 23.2 XSS攻击 
 
 - 原理：利用网站的漏洞，比如在评论里面提交了一些script语言（<script>alert('hello world')</script>）,浏览器就会跳出一个弹窗。可以利用类似的漏洞在网站页面上插入广告，破坏html的结构
-- 防御：如果不需要显示富文本，那么在渲染用户提交的数据时候，一定要使用转义（django默认开启转义，使用|safe是关闭转义）
+
+- 防御：
+
+  - 普通文本：如果不需要显示富文本，那么在渲染用户提交的数据时候，可以使用转义1：django默认开启的转义，使用|safe是关闭转义。2.在接受到数据的时候，进行检测（使用django.template.defaultfilters中的escape过滤器）手动转义
+
+  - 富文本防御：富文本就是把前端标签一起传到数据库保存，不经过转义。
+
+    - 指定富文本中可以使用的标签，如下方的组件按钮其实就是在指定富文本可以通过的前端标签，而js标签不能使用了
+
+      ![image-20200820054321894](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20200820054321894.png)
+
+    -  使用python的第三方库bleach，可以指定哪些标签可以使用
+
+### 23.3 clickjacking攻击
+
+- 原理：又被称作点击劫持攻击，是一种在网页中将恶意代码隐藏在看似无害的内容之下，并诱导用户点击的手段
+- 场景1：在电子邮件中包含一个视频按钮，但点击播放后就会跳转到另一个网页
+- 场景2：使用iframe标签将一个恶意网站的恶意连接透明的覆盖到明面网站的一个按钮上
+- 防御：只要设置a网站不能被iframe标签引用加载到其他网页中，就可以避免
+  - 可以通过设置响应头中的x-Frame-Options来设置这种操作，x-Frame-Options有以下几个值：
+    - DENY:不允许任何网页使用iframe加载本网页
+    - SAMEORIGIN:相同域名下可以使用iframe
+    - ALLOW-FROM origin:允许任何网页加载
+- django中就是使用了XFrameOptionsMiddler中间件补上了这个漏洞，原理就是在响应头中设置了SAMEORIGIN这个值
+
+### 23.4 SQL注入
+
+- 原理：就是把SQL命令插入到表单中或页面请求的查询字符串中，最终达到欺骗服务器执行sql命令。
+
+- 场景1：实现一个根据用户id获取用户详情的视图
+
+  - 有一个front_user表：
+
+    ```python
+    class User(modesl.Model):
+        telphone = models.CharField(max_lengt=11)
+        username = models.CharField(……)
+        password = models.……
+    ```
+
+  - 业务中使用原生sql
+
+    ```python
+    def index(request)
+    	user_id = request.GET.get('user_id')
+        cursor = connection.cursor()
+        cursor.execute('select id,username from front_user where id =%s' % user_id)
+        rows = cursor.fetchall()
+        for row in rows:
+            print(row)
+        return HttpResponse('success')
+    ```
+
+    如果用户在user_id的表单中输入 1 or 1=1,那么执行的SQL语句就是：
+
+    ```python
+    select id,username from front_user where id = 1 or 1 = 1
+    ```
+
+    改语句就会把所有用户的信息都显示出来
+
+- 防御：
+
+  - 不要信任用户的输入，对用户进行的输入一定要校验，如限制长度，对单引号和双-进行转换等
+
+  - 业务代码中不要动态凭借sql，可以使用参数化的sql或者直接使用存储过程进行数据查询
+
+    ```python
+    user_id = '1 or 1=1'
+    cursor = connection.cursor()
+    sql = 'select ... from user_id = %s'
+    cursor.execute(sql,(user_id,))
+    #这里user_id在一个元组中，所以并不会被解析成sql语句，而是作为条件
+    ```
+
+    
+
+  - 不要使用管理员连接数据库，为每个应用使用单独的权限管理
+
+  - 不要把机密信息直接存放，对密码等敏感信息进行加密
+
+  - 提供给用户的错误信息一定要少，最好是包装后再提供给用户
+
+- django中的防御：
+
+  - 使用orm，因为orm是参数化的形式执行sql语句
+  - 如果要执行原生sql，就不要使用拼接的方式，用参数化
+
