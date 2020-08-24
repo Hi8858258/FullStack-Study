@@ -1968,3 +1968,397 @@ CSRF（cross site request forgery，跨站域请求伪造）是一种网络的�
   - 使用orm，因为orm是参数化的形式执行sql语句
   - 如果要执行原生sql，就不要使用拼接的方式，用参数化
 
+## 二四. 验证和授权概述
+
+django 有一个内置的授权系统。用来处理用户，分组，权限，以及基于cookie的会话系统。django的授权系统包括验证和授权两个部分，验证是验证这个用户是否是它申称的人，授权是给与用户响应的权限。内置的权限系统包括以下方面
+
+1. 用户
+2. 权限
+3. 分组
+4. 一个可以配置的密码哈希系统
+5. 一个可插拔的后台关系系统
+
+使用授权系统：
+
+默认中创建完一个django项目后，其实已经有了授权系统，以下是授权系统相关的配置：
+
+- installed_apps：
+  - django.contrib.auth：包含了一个核心授权框架，以及大部分的模型定义
+  - django.contrib.contenttypes：content type系统，用来关联模型和权限
+- 中间件：
+  - SessionMiddleware:用来管理session
+  - AuthenticationMiddleware:用来处理和当前session想关联的用户
+
+授权系统和admin可以剥离使用
+
+### 24.1 User模型
+
+字段：可以查看User源码
+
+- User模型使用方法：
+
+  - 通过create_user方法可以快速创建用户，这个方法必须传递username,email,password。和create方法不同的在于会处理一些特殊的字段，比如password，会进行加密
+
+    ```python
+    from django.contrib.auth.models import User
+    user = User.objects.create_user('zhiliao','sdf@12.com','1111')  #使用create已经将用户存到数据库了，不需要再save
+    ```
+
+  - 创建超级用户
+
+    ```python
+    user = User.objects.create_superuser('abc','sdf@12.com','1111')
+    ```
+
+    也可以使用python manage.py createsuperuser 
+
+    修改密码
+
+    ```python
+    user = User.objects.get(pk=1)
+    user.set_password('1234') #这里不能使用user.password来修改字段内容，因为这个字段里面的使用算法加密。要使用set_password方法来改密码
+    user.save()
+    ```
+
+- 登入验证
+
+  - django的验证系统已经帮我们实现了登入验证功能，通过django.contrib.auth.authenticate即可实现。这个方法只能通过username和password来进行验证
+
+    ```python
+    from django.contrib.auth import authenticate
+    user = authenticate(requst,username="abc",password='111')
+    if user:
+        #执行验证通过的代码
+        print(user.username)
+    else:
+        #执行验证没通过的代码
+    ```
+
+### 24.2 扩展用户模型
+
+django内置的模型虽然足够强大，但还是不能满足需求。比如验证用户登入的时候，django用的是用户名，而国内现在主要是通过手机号或者邮箱验证。我们要增加新的字段的时候，也需要扩展用户模型
+
+#### 24.2.1 proxy模型
+
+如果你对django提供的字段，以及验证的方法都比较满意，只是需要在它原有的基础之上增加一些操作的方法。那么建议使用这种方法
+
+```python
+class Person(User):
+    #在代理模型中，不能添加模型的字段
+    class Meta:
+        proxy = True
+        
+   	def get_blacklist(self):
+        return self.objects.filter(is_active = False)
+```
+
+说明：我们定义了一个Person类，让他继承自User，并且在Meta中设置proxy，说明这个只是User的一个代理模型。他并不会影响原来User模型在模型库中表的结构。以后如果你想方便的获取所有黑名单的人，那么你就可以通过Person.get_blacklist()就可以获取到。并且User.objects.all()和Person.objects.all()其实是等价的，因为他们都是从User这个模型中获取所有数据
+
+#### 24.2.2 一对一外键(实际开发用的比较多，不会破坏django原有的user模型)
+
+如果对用户验证的方法authenticate没有其他要求，就是使用username和password即可完成，但是想要在原来模型的基础上添加新的字段，那就可以一对一添加外键的方式
+
+```python
+#models.py
+from django.contrib.auth.models import User
+from django.db import models
+from django.dispatch import receiver
+from django.db.models.signals import post_save
+
+class UserExtension(models.Model):
+    user = models.OneToOneField(to=User, on_delete=models.CASCADE,related_name = "extension")
+    telephone = models.CharField(max_length = 11)
+    birthday = models.DateField(null=True,blank=True)
+    school = models.CharField(max_length=100)
+    
+#在实际开发中，不可能创建一个User对象就手动去创建一个extension,所以我们会使用receiver来监听User对象的创建
+@receiver(post_save,sender=User) #监听的是User对象，并且当对象save了就会执行下面的方法
+def create_user_extension(sender,instance,created,**kwargs):
+    if created:
+        UserExtension.objects.create(user = instance) #如果创建新的user对象，就会自定创建一个extension
+    else:
+        instance.extension.save()  #如果只是更新，那么就会执行save
+
+#views.py
+def test_view(request):
+    user = User.objects.create_user(username="abc",email='like@qq.com',password='111')
+    user.extension.telephone = '18933333333'
+    user.save() #当执行save后就会把在user和extension表同时增加新的信息
+
+#改变验证登入（从默认的使用用户名，改为手机号的改变）
+def my_authenticate(telephone,password):
+    user = User.objects.filter(extentsion_telephone=telephone).first()
+    if user
+    	is_correct = user.check_password(password)
+        if is_correct:
+            return user
+        else:
+            return none
+    else：
+   		return none
+```
+
+#### 24.2.3 继承自AbstractUser
+
+不想修改原来的User对象上的一些字段，但是想要增加一些字段，那么这时候可以直接继承django.contrib.auth.models.AbstractUser，其实这个类也是User的父类。比如我们想在原来的User模型上，增添一个telephone和school字段，其实就是重写了User。示例如下
+
+```python
+#models.py
+from django.contrib.auth.models import AbstractUser
+class User(AbstractUser):
+    telephone = models.CharField(max_length=11,unique = True)
+    school = models.CharField(max_length=100)
+    
+    #指定telepone作为USERNAME_FIELD,以后使用authenticate
+    #函数验证的时候，就可以根据telephone来验证而不是根据username
+    USERNAME_FIELD = 'telephone'
+    REQUIRED_FIELDS = ['username','password']
+    #重新定义Manager对象，在创建user的时候使用telephone和password，而不是使用username和password
+    objects = UserManager()
+    
+class UserManager(BaseUserManager):
+    user_in_migrations = True
+    
+    def _create_user(self,telephone,username,password,**kwargs):
+        if not telephone:
+            raise ValueError('必须要传递手机号码')
+        if not password:
+            raise valueError('必须要传递密码')
+        user = self.model(telephone=telephone,username=username)
+        user.set_password(password)
+        user.save()
+    def create_user(self,telephone,username,password,**kwargs):
+        kwargs['is_superuser'] = False
+        self._create_user(telephone=telephone,username=username,password =password,**kwargs)
+    
+    def create_superuser(self,telephone,username,password,**kwargs):
+        kwargs['is_superuser'] = True
+        self._create_user(telephone=telephone,username=username,password =password,**kwargs)
+```
+
+2.在models里改好User模型后，就要在settings.py中添加一条
+
+```python
+#settings.py
+AUTH_USER_MODEL = 'app.User' #app指的是你的app名
+```
+
+3.在数据库中映射，但是这一定要在第一次迁移之前就把新的User写好，不能反复去修改
+
+#### 24.2.4 继承自AbstractBaseUser模型
+
+如果内置的AbstractUser里的字段比如username等是我们我们不想要，那么就需要自己完全重新写一个User，继承abstractBaseUser。这种方式会比较麻烦，最好是在了解django的基础上再用
+
+```python
+class User(AbstractBaseUser,PermissionsMixin):
+    email = models.EmailField(unique=True)
+    username = models.CharField(max_length)
+    telephone = models.charField(max_lengt,unique=True)
+    is_active = models.BoolenField(default=True)
+    
+    USERNAME_FIELD = 'telephone' #在这里的字段必须确保要唯一 
+    REQUIRED_FIELDS = []    #以后再命令行创建用户的时候，提示需要的字段。空表示只会提示你输入telephone和password
+    
+    objects = UserManager()
+    
+    def get_full_name(self):
+        return self.username
+    def get_short_name(self):
+        return self.username
+```
+
+在AbstracBaseUser里面已经定义好了password和last_login字段，我们直接继承就行，然后在User里面添加我们想要的字段。
+
+User重新定义后，那么第一次迁移前这个User模型就要写好。
+
+```python
+views.py
+
+def login_auth(request):
+    tel = request.POST.get('telphone')
+    password = request.POST.get('password')
+    
+    user = authenticate(request,username = tel,password = password) #authenticate里面默认是username作为验证字段
+    if user:
+        print(‘验证成功’)
+```
+
+### 24.3 权限
+
+- 登入
+
+在使用authenticate登入验证后，就会返回一个user对象，使用user对象后，可以使用django.contrib.auth.login进行登入。
+
+```python
+from .forms import LoginForm
+from django.contrib.auth import login
+def my_login(request):
+    if request.method =='GET':
+        return render(request,'login.html')
+    else:
+        form = LoginForm(request.POST)
+		if form.is_valid():
+            telephone = form.cleaned_data.get('telephone')
+            password = form.cleaned_data.get('password')
+            remember = form.cleaned_data.get('remember')
+            user = authenticate(request,username=telephone,password=password)
+    		if user and user.is_active:
+        		login(request,user)#login函数可以看源码，其实就是给用户穿了一个session，这样就完成登入了
+                if remember:
+                    #设置为None,则表示使用全局的过去时间
+                    request.session.set_expiry(None)
+                else:
+                    request.session.set_expiry(0) #浏览器已关闭就删除session
+                return HttpResponse('登入成功')
+           	else：
+            	return HttpResponse('手机号码或密码错误')
+         else:
+            print(form.errors)
+            return rediret('login.html')
+```
+
+- 注销
+
+注销，或者说推出登入。我们可以吐过django.contrib.auth.logout来实现，他会清理session数据
+
+```python
+def my_logout(request):
+   	logout(request)
+    return HttpResponse('推出成功')
+```
+
+- 登入限制
+
+有时候，某个视图需要登入后才能访问，我们就可以通过django.contrib.auth.decorators.login_required装饰器来实现。如下：
+
+```python
+from django.contrib.auth.decorators import login_required
+ 
+@login_required(login_url='/login/') #login_url默认是一个account/login的，所以需要重新配置
+def profile(request):
+    #登入后才能看到的个人中心
+    return HttpResponse('这是个人中心')
+```
+
+-  权限表
+
+django中内置了权限的功能，他的权限针对表或者说是模型级别的，比如对某个模型上的数据是否可以进行增删查改操作。他不能针对数据级别的，比如对某个表中的某条数据能否进行增删改查操作。（如果要实现数据级别的，就要使用django-guardian了）。创建完一个模型后，针对这个模型默认有三种权限，增删改。可以到auth_permission中查看所有的权限
+
+![image-20200823183635163](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20200823183635163.png)
+
+如果要指定模型能使用的权限，
+
+1：可以在模型中自定义
+
+```python
+#models.py
+class Article(models.Model):
+    title = models.……
+    
+    class Meta:
+        permissions = [
+            ('view_artile','看文章的权限')      #view_article会到权限表的codename列中，描述会到name列中
+        ]
+```
+
+2：可以通过代码的方式实现
+
+权限都是django.contrib.auth.Permission的实例。这个模型包含三个字段，name,codename,content_type。content_type代表整个permission属于哪个app下的哪个models的对象
+
+```python
+from django.contrib.auth.models import Permission,ContentType
+from .models import Article
+content_type = ContentType.object.get_for_model(Article)
+permission = Permission.objects.create(name = "可编辑的全新啊",codename = 'edit_article',content_type=content_type)
+```
+
+- 用户与权限管理
+
+  - 权限就是一个数据，必须要和用户绑定才有作用。User模型和之间的管理，可以通过以下方式管理
+
+    ```python
+     #views.py
+     def operate_permission(request):
+        user = User.objects.first()
+        content_type = ContentType.objects.get_for_model(Article)   #先把Article的contenttype拿出来
+        permissions = Permission.objects.filter(content_type = content_type) #然后把Article模型里的权限都拿出来
+        user.user_permissions.set(permissions) #把取出来的权限都给到user。实际上是存到一张表里
+        #user.user_permission.add(permission1,permission2)一个个添加权限
+        #user.user_permission.remove(permission1,permission2)一个个删除
+        #user.user_permission.clear() 删除所有权限
+        #user.has_perm('app_name.codename') 判断用户是否有特定的权限
+        #user.get_all_permissions()获取所有权限
+    ```
+
+  - 权限限定装饰器(实际开发也用的多)
+
+    使用django.contrib.auth.decorators.permission_required可以非常方便的去检查用户有没有权限，如果拥有才能进入相应视图
+
+    ```python
+    from django.contrib.auth.decorators import permission_required
+    
+    @permission_required('front.view_article',login_url='/login/',raise_exception=True)#如果没有登入，会跳转到登入页面。使用raise_exception如果没有权限，会跳出一个403错误
+    def my_view(request)
+    	return HttpR('这是添加文章的页面')
+    
+    
+    
+    #下面是不使用装饰器的方法
+    def add_article(request):
+        #判断用户有咩有登入
+        if request.user.is_authenticated：
+        	print(‘已经登入’)
+            if request.user.has_perm('front.add_article')
+            	return HttpResponse('这是添加文章的页面')
+            else:
+                return HttR('没有访问该页面的权限'，status=403)
+        else:
+            return httpR('请先登入')
+    ```
+
+- 分组操作
+
+  ```python
+  from django.contrib.auth.models import Group
+  def operate_group(request):
+      #创建分组
+      group = Group.objects.create(name = 'group_name')
+      #获得artcile的contenttype
+      content_type = ContentType.objects.get_for_model(Article)
+      #获得artcile的权限
+      permissions = Permission.objects.filter(content_type = content_type)
+      #给与group组权限
+      group.permissions.set(permissions)
+      group.save()
+      
+      #下面是将用户添加到分组里
+      #先拿到运营分组
+      group = Group.objects.filter(name = '运营').first()
+      #获得user对象
+      user = User.objects.first()
+      #给用户添加组
+      user.groups.add(group)
+      #user.save()
+      
+      #下面是查看某用户的权限
+      user = User.objects.first()
+      permissions = user.get_group_permissions()
+      print(permissions)
+      #user.has_perm
+      #首先判断user.permissions下有没有这个权限，如果有，就True
+      #如果user.permisisions下没有，就会判断用户所属分组下有没有这个权限
+      return HttpResponse('操作成功')
+  ```
+
+- 在模板中使用权限
+
+  在setting.TEMPLATES.OPTIONS.context_processors下，因为添加了django.contrib.auth.context_processors.auth上下文处理器，因此在模板中可以通过perms来获取当前用户的所有权限
+
+  ```html
+  {% if perms.front.add_article %}
+  <a href= 'article/add/'>添加文章</a>    //如果用户有添加文章的权限才能看到这个连接
+  {% enif %}
+  ```
+
+  
+
