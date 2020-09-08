@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_2022568_qb2ynmbtmpn.css">
+    <script src="{% static 'js/jquery-3.4.1.min.js' %}"></script>
+    {% block head %}{% endblock %}
+    <title>{% block title%}{% endblock %}</title>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <a href="/"></a>
+            </div>
+            <ul class="navigator">
+                <li><a href="">资讯</a></li>
+                <li><a href="">创业课堂</a></li>
+                <li><a href="">企业服务</a></li>
+                <li><a href="">搜索</a></li>
+            </ul>
+            <div class="auth-box">
+                <i class="icon-person iconfont"></i>
+                <div><a href="">登入</a></div>
+                <div><a href="">注册</a></div>
+            </div>
+        </div>
+    </header>
+    {% block main %}
+    {% endblock %}
+
+    <footer class="footer">
+        <div class="top-footer">
+            <div class="top-inner-group">
+                <div class="logo-box"></div>
+                <div class="detail-group">
+                    <div class="line1">
+                        <ul class="links">
+                            <li><a href="">关于小饭桌 |</a></li>
+                            <li><a href="">创业课堂 |</a></li>
+                            <li><a href="">凡创资本 |</a></li>
+                            <li><a href="">饭桌资本</a></li>
+                        </ul>
+                        <span class="about"></span>
+                    </div>
+                    <div class="line2">
+                        <span class="contact">地址：北京市朝阳区东三环北路38号院泰康金融大厦</span>
+                        <span class="address">融资服务： bp@xfz.cn 商务合作： bd@xfz.cn</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bottom-footer">
+            ©2020 北京子木投资顾问有限公司 京ICP备15051289号 | 增值电信业务经营许可证：京B2-20170574
+        </div>
+    </footer>
+</body>
+</html>
