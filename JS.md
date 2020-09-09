@@ -1,10 +1,52 @@
 # JS
 
+## Js文件的引入
+
+html有两种方式可以使用js代码，在head或者body中使用script标签：
+
+1. 不同的是script标签里没有src属性的时候，可以直接写在标签里携代码
+
+   ```javascript
+   <head>
+       <script type = "text/javascript">
+           xxx
+       </script>
+   </head>
+   ```
+
+2. 也可以使用src属性引用外部的js文件
+
+   ```javascript
+   <head>
+       <script type = "text/javascript" src = "js/asd.js ">
+       </script>
+   </head>
+   ```
+
 ## 一.数据类型转换
+
+在js中主要有两种数据大类：
+
+1. 基本数据类型：Number, String, Boolean, undefined, null
+
+2. 引用数据类型：object, Array, Function
+
+   可以通过typeof 去检验变量存的数据的类型
+
+   ```js
+   var a = 1;
+   alert(typeof a)
+   //当变量没有被赋值时，typeof 变量会显示undefined
+   //null是空对象
+   ```
+
+   
 
 - Boolean() 将其他数据类型，转换成布尔值
 
 - Number() 将其他数据类型，转换成数字
+
+- 变量.toString() 会把变量转成字符串
 
   - 只能纯数字的字符串可以使用
 
@@ -25,7 +67,7 @@
 
 - 赋值运算符：=
 
-- 关系运算符：>,<,>=,<=,==,!=,===(恒等),!==（恒不等）
+- 比较运算符：>,<,>=,<=,==,!=,===(恒等),!==（恒不等）
 
   为什么会有==,和===呢，因为js在使用==时候，会将==两边的数据类型自动转换成一样的比如"10" == 10 为true，而===不会转换，所以两边的数据需要类型相等，值相等
 
@@ -40,6 +82,11 @@
   格式: 表达式1? 表达式2：表达式3
 
   表达式1为true,则执行表达式2，否则执行3
+  
+  ```js
+  1>2? '真的':'假的'
+  >>>>假的
+  ```
 
 ## 三. 流程控制语句
 
@@ -82,14 +129,82 @@
          	当上述所有case都不执行的时候，
          break;
   }
-  
-  switch的表达式与case常量相等，就执行语句
+  switch的表达式与case常量相等，就执行语句。如
+  var weather = "sunny";
+  switch(weather){
+      case 'sunny':
+          console.log('是晴天')
+          break;
+      case 'xiayu':
+          console.log('下雨了')
+          break;
+      default:
+          console.log('多云');
+          break
+  }
+  //如果每个case中没有break就会case穿透，执行下一个case
   ```
 
+## 四. 循环
 
-## 四. 函数
+### 4.1 for循环
 
-### 4.1 arguments
+for循环主要用于初始和终止条件都已知
+
+```js
+for(初始化条件;结束条件；条件递增变化){
+    要执行的代码
+}
+//例子
+var i;
+var sum = 0;
+for(i = 1;1 <= 1000;i++){
+    console.log(i);
+    sum = sum + i
+}
+```
+
+break 和continue的区别：break是直接终止循环体，而continue是跳过continue后面的代码，直接进入下一次循环
+
+### 4.2 while循环
+
+```
+初始化条件
+while(判断循环结束条件){
+     //run this code
+    递增条件
+}
+
+var i = 1;
+var sum = 0;
+while(i<=100){
+    sum += i;
+    i += 2;
+}
+
+
+```
+
+### 4.3 do while先执行，再判断
+
+计算1到100之间数的合
+
+```js
+var sum = 0
+var i = 1;
+do{
+    sum += i;
+    i++;
+}while(i<100);
+```
+
+
+
+
+
+## 五. 函数
+
+### 5.1 arguments
 
 每个函数内部都有一个arguments,系统内置的，用来存储实际传入的参数
 
@@ -110,7 +225,7 @@ function sum(){
 }
 ```
 
-### 4.2 作用域
+### 5.2 作用域
 
 如果在函数外部申明了变量（全局变量），可以直接在函数里面使用。（变量在函数前后位置没有关系）
 
@@ -169,23 +284,117 @@ test()     >>>>1
 console.log(a);   >>>undefined
 ```
 
-## 五. 数组
+#### 5.2.1 全局污染
+
+比如一个html文件引入两个外部js文件，这两个js文件都有相同名的函数，那么再html调用这个函数的时候，就只会调用第二个引入的文件中的函数
+
+```html
+<script src = "first.js"></script>
+<script src="second.js"></script>
+<script>
+    console.log(hello())
+</script>
+```
+
+```js
+//first.js
+var name = 'li';
+function hello(){
+    return ('hello' + name);
+}
+
+//second.js
+var name = 'ke';
+function hello(){
+    return ('hello' + name);
+}
+```
+
+解决这种全局污染的方式是将两个函数放到作用域里去。然后将函数挂载到window对象上
+
+```html
+<script src = "first.js"></script>
+<script src="second.js"></script>
+<script>
+    //window可以省略不写，直接使用first（），second()
+    console.log(window.first())
+    console.log(window.second())
+</script>
+```
+
+```js
+//使用(function（）{})()这样的自执行匿名函数，把作用域包裹
+//把想要的函数放到一个函数作用域里去
+//first.js
+(function(){
+    var name = 'li';
+    function hello(){
+    return ('hello' + name);
+}
+    window.first = hello;
+})();
+
+
+//second.js
+(function(){
+    var name = 'ke';
+    function hello(){
+    return ('hello' + name);
+}
+    window.second = hello;
+})();
+```
+
+### 5.3 函数表达式
+
+```js
+function sum(a,b){
+    return a+b
+}
+console.log(sum(2,3))
+
+
+//下面是函数表达式，合上面的结果一样
+var ss = function(a,b){
+    return a+b
+}
+console.log(ss(2,3))
+
+```
+
+## 六. 对象
+
+```js
+var person = {
+    //和函数不一样的地方就是没有括号
+    name:"mj",
+    age:18,
+    sex:"女",
+    ff:function(){
+        alert('吃饭')
+    }
+}
+console.log(person.name)
+person.ff()
+```
+
+### 6.1 内置对象数组
 
 数组的申明方式：
 
-1. 通过new创建数组
+1. 通过new创建数组（构造函数创建，少用）
 
    ```javascript
    var arr = new Array(100,true,'hello');
    ```
 
-2. 可以省略new运算符
+2. 可以省略new运算符（构造函数创建，少用）
 
    ```javascript
    var arr = Array(100,true,'hello');
    ```
 
-3. 可以用中括号直接创建
+3. 可以用中括号直接创建（常用的方式）
 
    ```javascript
    var arr = [100,true,'hello']
@@ -193,9 +402,7 @@ console.log(a);   >>>undefined
 
 注意，1，2两种方法当只有1个参数（比如10）时候，创建的是长度为10的数组，并不是创建了拥有10这个元素的数组
 
-
-
-### 5.1 for....in
+#### 6.1.1 for....in
 
 ```html
 var a = [10,20,30,40]
@@ -204,7 +411,7 @@ for(var i in a){
 }
 ```
 
-### 5.2 for....of
+#### 6.1.2 for....of
 
 ```javascript
 var a = [10,20,30,40]
@@ -213,19 +420,16 @@ for(var i of a){
 }
 ```
 
-### 5.3 数组的方法
+#### 6.1.3 数组的方法
 
-数组实现栈结构的方法：
+- 数组实现栈结构的方法：
+  - arr.push(参数1，参数2)    依次插入到数组中，返回值是数组插入元素后的新长度
+  - arr.pop() 没有参数，从尾部开始pop元素，返回值是pop出来的元素
+- 数组实现队列结构的方法：
+  - arr.shift() 从数组首部开始取元素，返回值是还余留下的元素
+  - arr.unshift(参数1，参数2)  从数组头部插入元素，返回值是新数组的长度
 
-- arr.push(参数1，参数2)    依次插入到数组中，返回值是数组插入元素后的新长度
-- arr.pop() 没有参数，从尾部开始pop元素，返回值是pop出来的元素
-
-数组实现队列结构的方法：
-
-- arr.shift() 从数组首部开始取元素，返回值是还余留下的元素
-- arr.unshift(参数1，参数2)  从数组头部插入元素，返回值是新数组的长度
-
-#### 5.3.1 concat 
+-  concat拼接 
 
 arr.concat(数组/数据) 拷贝原数组生成新数组（原数组不会改变），返回新的数组
 
@@ -237,11 +441,13 @@ var newArr = arr1.concat(arr2,'hello')
 alert(newArr) >>> [10,20,30,49,'hello']
 ```
 
-#### 5.3.2 slice切片
+- #### slice切片 （类似python中的数组切片）
+
 
 arr.slice(start,end) 生成新数组，原数组不改变 
 
-#### 5.3.3 splice
+- #### splice
+
 
 arr.splice(start,length,数据1，数据2，……)
 
@@ -253,15 +459,26 @@ length：要截取的元素个数
 
 用这个方法，可以实现数组的增加，删除，修改（先删除，再增加）
 
-#### 5.3.4 join
+```js
+//删除
+var names = ['li','e','js','fd','adf'] 
+names.splice(1,1)删除‘e’
+//修改
+names.splice(1,1，‘eee’)删除‘e’
+```
+
+- #### join
+
 
 arr.join(拼接符) 将数组中的元素，用传入的字符，拼接成一个字符串
 
-#### 5.3.5 reverse
+- #### reverse
+
 
 arr.reverse()
 
-#### 5.3.6 sort
+- #### sort
+
 
 arr.sort(函数) 不传参默认从小到大（按照第一位数字的大小）
 
@@ -272,72 +489,83 @@ var arr = [1,10,20,15,25,5]
 arr.sort(function(value1,value2){
     return value1-value2
 })
+//当排序函数里面返回的是正值，就说明value1.value2的位置是升序的，不用交换，如果是负值，就会交换
 ```
 
 js的数组变量和python里面一样，都是对实际数组内存的引用，所以下面的情况
 
+- ```javascript
+  var arr1 = [10,20]
+  var arr2 = arr1
+  arr2.push(30)
+  alert(arr1)  >>>[10,20,30]
+  ```
+
+
+- 位置方法 indexOf（），lastIndexOf()
+
+  - 如果查不到结果，返回-1
+
+  ```js
+  var names = ['li','e','js','fd','li','adf']
+  alert(names.indexOf('li'));    0 第一个元素
+  alert(names.indexOf('li'));    4 最后一个元素
+  ```
+
+  
+
+- #### ES5新增的数组方法：
+
+  1. indexOf()
+
+     arr.indexOf(item,start)     从start下标开始查找第一次出现item的下标,不传start的话默认为0，如果找不到这个元素的话，返回-1
+
+  2. forEach()  
+
+     arr.forEach(item,index,arr)    //item就是当前的元素，index是当前元素的下标}
+
+  3. map 映射函数
+
 ```javascript
-var arr1 = [10,20]
-var arr2 - arr1
-arr2.push(30)
-alert(arr1)  >>>[10,20,30]
+var arr = [10,20,30,40]
+var newArr = arr.map(function(item,index,arr){
+    return item*1.3
+})
 ```
 
-#### 5.3.7 ES5新增的数组方法
+​		4. filter过滤
 
-1. indexOf()
+```javascript
+var arr = [10,20,30,40]
+var newArr = arr.filter(function(item,index,arr){
+    //过滤条件
+    return item>20
+})
+```
 
-​	arr.indexOf(item,start)     从start下标开始查找第一次出现item的下标,不传start的话默认为0，如果找不到这个元素的话，返回-1
+5. some 返回值是true/false，数组中是否有符合条件的元素，找到就结束不会一直找下去
 
-1. forEach()  
+```javascript
+var arr = [10,20,30,40]
+var newArr = arr.some(function(item,index,arr){
+    return item>20
+})
+```
 
-   arr.forEach(item,index,arr){
+6. every  找全数组中的所有元素
 
-   ​		//item就是当前的元素，index是当前元素的下标}
+7. reduce 归并
 
-2. map 映射函数
+```javascript
+var arr = [10,20,30,40]
+var newArr = arr.reduce(function(pre,next,index,arr){
+    //过滤条件
+    return pre + next
+    //pre 第一次是下标为0的元素，接下来就是pre+next的值
+    //next第一次是下标为1的元素，接下来就是依次往后取
+})
+```
 
-   ```javascript
-   var arr = [10,20,30,40]
-   var newArr = arr.map(function(item,index,arr){
-       return item*1.3
-   })
-   ```
-
-3. filter过滤
-
-   ```javascript
-   var arr = [10,20,30,40]
-   var newArr = arr.filter(function(item,index,arr){
-       //过滤条件
-       return item>20
-   })
-   ```
-
-4. some 返回值是true/false，数组中是否有符合条件的元素，找到就结束不会一直找下去
-
-   ```javascript
-   var arr = [10,20,30,40]
-   var newArr = arr.some(function(item,index,arr){
-       return item>20
-   })
-   ```
-
-5. every  找全数组中的所有元素
-
-6. reduce 归并
-
-   ```javascript
-   var arr = [10,20,30,40]
-   var newArr = arr.reduce(function(pre,next,index,arr){
-       //过滤条件
-       return pre + next
-       //pre 第一次是下标为0的元素，接下来就是pre+next的值
-       //next第一次是下标为1的元素，接下来就是依次往后取
-   })
-   ```
-
-   
 
 ## 六.变量声明提升
 
@@ -406,7 +634,7 @@ function(){
 
 - str.charAt(下标) 获取字符   也可以使用str[下标来获取]
 
-- str.charCodeAt() 返回对应字符的ASCII码
+- str.charCodeAt() 返回对应字 符的ASCII码
 
 - str.indexOf(substr,start) 在字符串从start开始查找substr字符串，并返回所在下标，start默认为0。如果返回-1说明没找到
 
@@ -440,6 +668,7 @@ String对象本身的方法：
 - str.link() 将字符串显示为连接
 - str.sub() 将字符串显示为下标
 - str.sup() 将字符串显示为上标
+- str.trim()清除字符串前后空格
 
 ## 九. 对象
 
