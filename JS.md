@@ -54,12 +54,14 @@ html有两种方式可以使用js代码，在head或者body中使用script标签
 
     Number(undefined ) 为NaN
 
-- parseInt() 
+- parseInt()  只会转换第一个字母前的数字
   - 作用：
     - 取整
     - 转换进制
 
 - parseFloat() 取浮点数
+
+- num.toFixed(2)；浮点数取两位小数，但是会转换为字符串
 
 
 
@@ -566,6 +568,18 @@ var newArr = arr.reduce(function(pre,next,index,arr){
 })
 ```
 
+### 6.2 Global 对象
+
+是一种不由对象调用，但可以使用的方法，不能console.log(global)；浏览器中有一个window对象，其实就相当于global对象
+
+uri:统一资源标识。在js中我们可以看到一些链接中的空格会被编码成%20，如果想要节码，可以使用如下方式
+
+```js
+URI = 'http://www.df.com/ keke'
+var encodeURI = encodeURI(URI)
+var deco = decodeURI(encodeURI)
+//还有一种时encodeURIComponent(URI)可以把所有符号都编码
+```
 
 ## 六.变量声明提升
 
@@ -723,45 +737,80 @@ var obj4 = {
 
 ### 9.5 Math对象
 
-它的部分方法
+Math属性：可以通过浏览器直接看到
 
-Math.random() 返回0-1之间的随机数
+​	Math.E 自然对数e
 
-Math.max(num1,num2)
+部分方法
 
-Math.min(num1,num2)
+​	Math.random() 返回0-1之间的随机数
 
-Math.abs(num)
+​	Math.max(num1,num2)
 
-Math.ceil(19.3) 向上取整
+​			Math.max.apply(null,arr)
 
-Math.floor(11.8) 向下取整
+​	Math.min(num1,num2)
 
-Math.pow(x,y)
+​	Math.abs(num)
 
-Math.sqrt(num)
+​	Math.ceil(19.3) 向上取整
+
+​	Math.floor(11.8) 向下取整
+
+​	Math.round(num) 标准的四舍五入
+
+​	Math.pow(x,y)
+
+​	Math.sqrt(num)
+
+几个小demo
+
+```js
+<script>
+        //获取一个范围内的随机数
+        function random(min,max){
+            return Math.floor(Math.random()*(max-min) + min)
+        }
+        console.log(random(1,100))
+
+
+        //获取随机rgb颜色
+        function randomColor(){
+            var r = random(0,256);
+            var g = random(0,256);
+            var b = random(0,256);
+            return result = `rgb(${r},${g},${b})`    //使用``模板字符串，可以使用${}来使用表达式，很强大
+        }
+        document.body.style.backgroundColor = randomColor()
+        console.log(randomColor())
+</script>
+```
+
+
 
 ### 9.6 Date时间对象
 
 ```javascript
-var d = new Date();
+var d = new Date();  //不带参数直接获得当前事件
+var dd = new Date(1995,11,25,14,30,0) 年，月，日，时，分，秒
 ```
 
-日期对象的方法：
+日期对象的格式化方法：
 
-d.toDateString();
-
-d.toTimeString()
+1. d.toDateString(); 获取了星期几 月 日 年
+2. d.toTimeString() 获取时分秒
+3. d.toLocaleDateString(); 年/月/日
+4. now.toLocaleTimeString()；时间
 
 比较重要的是：
 
-d.getDay() 返回0-6。 0 代表星期天
-
-d.getHours()
-
-d.getMinutes();
-
-d.getSeconds();
+1. d.getDay() 返回0-6。 0 代表星期天
+2. d.getDate() 获取日期
+3. d.getMonth() 获取月分
+4. d.getFullYear() 获取年份
+5. d.getHours()
+6. d.getMinutes();
+7. d.getSeconds();
 
 #### 9.6.1 Date方法
 
@@ -778,13 +827,17 @@ setInterval(函数，时间（1000ms）) ,每个1000ms执行一次函数
 
 ## 十.BOM 浏览器对象模型
 
-### 10.1 窗口对象window
+主要包含以下几个对象
 
-像alert（）其实是window的一个方法，完整的用法师window.alert()
+### 10.1 窗口对象window（）
 
-show（）方法和alert一样
+- 像alert（）其实是window的一个方法，完整的用法window.alert()
 
-其实所有的属性，变量，函数前面都可以跟window
+
+-  show（）方法alert（）一 样
+
+
+其实所有的属性，变量，函数前面都可以跟window。相当于所有的变量和对象其实都是挂载到window对象上的
 
 ```javascript
 var num =10;
@@ -793,7 +846,7 @@ alert(window.num)
 
 ![image-20200718135055742](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20200718135055742.png)
 
-### 10.2 confirm（）
+- confirm（）
 
 带确定和取消的弹出框,返回值是true/false  
 
@@ -801,7 +854,7 @@ alert(window.num)
 var res = confirm("内容")
 ```
 
-### 10.3 prompt()
+- prompt()
 
 带输入框的弹出框
 
@@ -811,53 +864,290 @@ var res = confirm("内容")
 
 ```javascript
 var res = prompt("请输入内容"，1000)
+//可以把res传给需要用到的地方
 ```
 
-### 10.4 open()
+- setTimeout()    延时方法，只会执行一次
 
-打开一个新的页面
+  ```js
+  window.setTimeout(function(){
+      console.log('like')
+  },2000)
+  //过两秒后执行function方法
+  ```
 
-参数：open（url,"xxx","xxx"）
+- setInterval(funcion，2000) 周期循环执行的方法，能配合clearInterval(定时器方法名)
 
-第一个参数是，打开新页面跳转的url
+  ```js
+  var num = 0;
+  var timer = null;
+  timer = setInterval(function(){
+      num ++;
+      if(nunm>5){
+          //当num大于5时候，定时器方法就会清除
+          clearInterval(timer);
+      }
+  },1000)
+  ```
 
-第二个参数，打开新窗口的名字
+- location()
 
-第三个参数，可以设置窗口的宽高
+  - 属性：
 
-### 10.5 history()
+  ​	location.protocol 返回的是url的协议类型，有file,http,https
 
-掌管的当前窗口（不是浏览器）的历史记录
+  ​	location.hostname 返回主机域名
 
-属性：
+  ​	location.href 返回完整的url，而且是经过编码的
 
-​	history.length
+  ```js
+  //可以使用这个对窗口的网页进行跳转
+  location.href = 'www.like.com'
+  location.replace = 'www.like.com' //replace跳转后不能使用后退按钮，不会产生历史记录
+  location.reload() //重载整个网页
+  ```
 
-方法：
+  ​	location.port 返回端口
 
-​	history.back()
+  ​	location.pathname 路径
 
-​	history.forward()
+  ​	location.search 返回查询字符串，就是问号后面的
 
-​	history.go()
+  ```js
+  //获取查询字符串
+  var qs = location.search.length>0? qs = location.search.substring(1); //取得去掉？的查询字符串
+  var items = qs.length? qs.split('&'):[]; //当qs存在时候，就取分割不同的查询词
+  console.log(items); //这就是取得的每一项查询
+  ```
 
-### 10.6 location()
+- navigator对象里有一个plugins属性，可以查看浏览器安装的插件
 
-属性：
+-  history() 掌管当前窗口（不是浏览器）的历史记录
 
-​	location.protocol 返回的是url的协议类型，有file,http,https
+  属性：
 
-​	location.hostname 返回主机域名
+  ​	history.length
 
-​	location.port 返回端口
+  方法：
 
-​	location.pathname 路径
+  ​	history.back()
 
-​	location.search 返回查询字符串，就是问号后面的
+  ​	history.forward()
 
-​	
+  ​	history.go()
+
+  ```js
+  history.go(0)//刷新当前页面
+  history.go(1) //前进一次，也可以前进2次
+  history.go(-1) //后退一次，也能后退2次
+  ```
+
+- open()
+
+  打开一个新的页面
+
+  参数：open（url,"xxx","xxx"）
+
+  第一个参数是，打开新页面跳转的url
+
+  第二个参数，打开新窗口的名字
+
+  第三个参数，可以设置窗口的宽高
 
 ## 十一.DOM
 
+文档对象模型，dom把整个html文档看作一颗树。html标签是树根，head，body是第二层节点。
 
+DOM中主要由三种节点：
+
+1. 元素节点：就是html标签
+2. 文本节点：比如p标签中的文本内容就是文本节点
+3. 属性节点：标签的属性
+
+### 11.1 获取节点
+
+1. 获取元素节点
+
+   ```js
+   var eleNode = document.getElementById('id名') //通过id名来获取单个对象
+   var oLis = document.getElementsByTagName('li') //通过标签名来获取一个对象集合，记住不是数组，不能用push方法
+   var oitems =  document.getElementsByClassName('类名'); //通过类名获取以对象集合
+   
+   ```
+
+2. 获取节点对象的属性
+
+   节点对象.getAttribute(‘属性名’)
+
+   ```js
+   <p title = '这里的'>dsfafda</p>
+   
+   var node = document.getElementByTagName('p')[0]
+   var title = node.getAttribute('title') >>>>这里的
+   ```
+
+3. 设置节点对象的属性
+
+   ```js
+   #box{
+   	color:red
+   }
+   node.setAttribute('id','box') //给P标签设置id属性，这样P就会获得css的color样式
+   ```
+
+### 11.2 节点属性
+
+1. 节点的名称
+
+   - 元素节点的nodeName与标签名相同
+   - 属性节点的nodeName与属性的名称相同
+   - 文本节点的nodeName永远是#text
+   - 文档节点的nodeName永远是#document
+
+   ```js
+   <p title = '这里的' id = ‘tt’>dsfafda</p>
+   
+   //1.获取元素节点
+   var node = document.getElementByID('tt')  //node就是元素节点对象
+   node.nodeName  >>>> p
+   node.nodeValur >>>>null
+   node.nodeTyoe >>>>>1
+   //2.获取属性节点
+   var att = node.attributes  //获取到的是P元素的属性节点集合
+   att[0].nodeName = title
+   att[0].nodeValue = '这里的'
+   att[0]。nodeType = 2
+   //3.获取文本节点
+   var text = node.childNodes[0]    //文本节点和注释节点都是元素节点的子节点。所以获取到的是节点对象集
+   ```
+
+2. 节点的值
+
+3. 节点的类型
+
+   元素节点：1。属性节点：2。文本节点：3。注释节点：8
+
+### 11.3 常用的节点属性
+
+- node.childNodes   获取到元素节点的所有子节点
+
+```js
+<div id = 'tt'>
+    <p>asdf</p> //也属于div元素的子节点，可以通过node.childNodes来获取
+ 	<p>dffd</p> //同上
+</div>
+
+var node = document.getElementById('tt')
+node.childNodes 
+//会返回5个子节点，分别是：text,p,text,p,text。三个text文本节点是换行符
+```
+
+- node.firstChild    获取到元素节点的第一个子节点
+
+- node.lastChild     获取到元素节点的最后一个子节点
+
+- node.parentNode   获取元素节点的父节点
+
+- node.nextSibing     获取兄弟节点
+
+  ```js
+  var n = document.get....
+  function get_nextSibling(n){
+      var x = n.nextSibling;
+      while (x && x.nodeType !=1){
+          //节点的兄弟节点可能是文本节点，也可能是注释节点
+          x = x.nextSibling
+      }
+      return x;
+  }
+  ```
+
+  
+
+- node.previousSibling 获取上一个兄弟节点
+
+### 11.4 元素节点对象的增删改查
+
+- createElement()
+- 插入节点
+  - appendChild()
+  - insertBefore(newNode,node)
+- 删除节点 removeChild(子节点名)
+- 替换节点 replaceChild(新节点对象（需要先创建），需要被替换的节点对象（需要被赋给一个变量）)
+- 创建文本节点 createTextNode() 
+
+```js
+<div id = 'tt'>
+    <p>sdf</p>
+</div>
+
+var oDiv = document.getElementById('tt')  //获取父节点
+var newNode = document.createElement('p') //创建一个p标签节点
+oDiv.appendChild(newNode);//将新建的p节点插入给父节点
+
+var textNode = document.createTextNode('like')
+newNode.appendChild(textNode)   //将文本节点赋给新建的P节点
+newNode.innerHTML = 'like' //可以直接对p节点创建一个文本
+newNode.innnerHTML = '<a href="#">sfsdf</a>' //innerHTML也可以渲染标签
+//还有一种innerText不能渲染标签
+```
+
+### 11.5 元素节点操作样式 
+
+通过node.style可以获得节点的样式对象
+
+```js
+<style>
+    .highlight{
+        color:'black';
+        font-size:16px
+    }
+</style>
+
+<p id = 'tt'>adsf</p>
+
+var node = document.getElementById('tt')
+//第一种操作样式的方法
+node.style.backgroudcolor = 'black'
+//第二种操作的方法是通过类属性来操作样式（用的比较多）
+node.setAttribute('class':'highlight')
+```
+
+### 11.6 事件
+
+常用事件
+
+| 事件        | 说明               |
+| ----------- | ------------------ |
+| onclick     | 鼠标点击           |
+| onmouseover | 鼠标经过           |
+| onmouseout  | 鼠标移开           |
+| onchange    | 文本框内容改变事件 |
+| onselect    | 文本框内容选中事件 |
+| onfocus     | 光标聚焦           |
+| onblur      | 光标失焦           |
+| onload      | 网页加载事件       |
+
+- 鼠标点击事件
+
+当发生事件的时候，就会触发后续的函数，给元素绑定事件由两种方式：
+
+```js
+var node = ....
+//1.第一种方式(第一种方式用得比较多)
+<script>
+node.onclick = function(){
+    alert('事件被触发')
+}
+</script>
+//2.第二种方式，直接在标签中赋予一个属性
+<p id = 'tt' onclick="add()"></p>
+<script>
+    function add(){
+    	alert(222)
+    }
+</script>
+```
+
+- 鼠标悬停事件
 
