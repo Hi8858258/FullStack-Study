@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片</title>
+</head>
+<body>
+    <img src="../images/" alt="" id="flower" width="200px" height="200px">
+    <br>
+    <button id="prev">上一张</button>
+    <button id="next">下一张</button>
+    <script>
+        var imageNode = document.getElementById('flower')
+        var next = document.getElementById('next')
+        var prev = document.getElementById('prev')
+        var imageNum = 1;
+        next.onclick = function(){
+            if (imageNum < 3){
+                imageNum ++;
+            }else{
+                imageNum = 1;
+            }
+            imageNode.setAttribute('src',`../images/timg-${imageNum}.jpg`)
+        };
+        prev.onclick = function(){
+            if (imageNum > 1){
+                imageNum --;
+            }else{
+                imageNum = 3;
+            }
+            imageNode.setAttribute('src',`../images/timg-${imageNum}.jpg`)
+
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>显示隐藏图片</title>
+</head>
+<body>
+    <button id="show">隐藏</button>
+    <br>
+    <img src="../images/timg-1.jpg" alt="" id="image">
+
+    <script>
+        var showButtion = document.getElementById('show')
+        var imageNode = document.getElementById('image')
+
+        showButtion.onclick = function(){
+            var textInfo = this.childNodes[0];
+            if (showButtion.innerHTML=='隐藏'){
+                imageNode.style.display = 'none';
+                textInfo.nodeValue = '显示';
+            }else{
+                textInfo.nodeValue = '隐藏'
+                imageNode.style.display='block';
+            }
+        }
+    </script>
+</body>
+</html>

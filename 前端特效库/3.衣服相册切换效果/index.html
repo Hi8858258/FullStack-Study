@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>衣服相册</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            list-style: none
+        };
+        ul{
+            overflow: hidden;
+        }
+        ul li{
+            float: left;
+            margin-right: 10px;
+            border: 2px solid #000000;
+        }
+    </style>
+</head>
+<body>
+    <img src="../images/timg-1.jpg" alt="" width="200px" height="200px" id="imageNode">
+    <ul class="imagelist">
+        <li><img src="../images/timg-1.jpg" alt="" width="50px" height="50px"></li>
+        <li><img src="../images/timg-2.jpg" alt="" width="50px" height="50px"></li>
+        <li><img src="../images/timg-3.jpg" alt="" width="50px" height="50px"></li>
+    </ul>
+    <script>
+        var imageNode = document.getElementById('imageNode');
+        var first = document.getElementById('first');
+        var second = document.getElementById('second');
+        var third = document.getElementById('third');
+        first.onmousemove = function(){
+            console.log(this.getAttribute('src'))
+            // imageNode.setAttribute('src',`${this.getAttribute('src')}`)
+
+        }
+
+        
+    </script>
+</body>
+</html>

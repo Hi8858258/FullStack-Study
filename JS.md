@@ -1037,6 +1037,7 @@ DOM中主要由三种节点：
  	<p>dffd</p> //同上
 </div>
 
+
 var node = document.getElementById('tt')
 node.childNodes 
 //会返回5个子节点，分别是：text,p,text,p,text。三个text文本节点是换行符
@@ -1151,3 +1152,64 @@ node.onclick = function(){
 
 - 鼠标悬停事件
 
+```js
+<div id="box"></div>
+
+//悬停
+var box = document.getElementById('box')
+box.onmouseover = function(){
+    this.style.backgroundColor= 'green';
+}
+//移开
+box.onmouseout = function(){
+    this.style.back----
+}
+
+```
+
+- 表单控件事件
+
+- onload事件
+
+  ```jd
+  //如果我们的script脚本是写在head里面的，那么就需要设置等html标签都加载号了再执行脚本，不然会抓取不到节点
+  window.onload = function(){
+  	//等待文档元素加载完成之后才会执行这里面的代码 
+  }
+  ```
+
+## 十二. js 特效
+
+1. 图片轮播切换
+
+2. 显示和隐藏图片
+
+3. 焦点图片切换
+
+4. 关闭小广告
+
+5. 图标切换
+
+6. 百度换肤
+
+7. tab选项
+
+8. 发表评论
+
+9. 九宫格布局
+
+10. 定时器鲜花表白
+
+11. 始终案例
+
+12. 瀑布流
+
+13. 轮播图
+
+14. 无缝轮播图
+
+15. 旋转木马
+
+16. 放大镜效果
+
+    
