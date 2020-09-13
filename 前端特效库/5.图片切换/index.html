@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        li{
+            width: 100px;
+            height: 100px;
+            float: left;
+            margin-left: 10px;
+        }
+        img{
+            width: 100%;
+            height: 100%;
+        }
+        ul{
+            width: 400px;
+            height: 100px;
+            padding-top: 500px;
+            border: 1px solid #e0e0e0;
+            background: url(../images/timg-2.jpg) no-repeat;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 以背景作为展示，结合列表 -->
+    <ul id="imagelist">
+        <li><img src="../images/timg-1.jpg" alt="" class="smallimage"></li>
+        <li><img src="../images/timg-2.jpg" alt="" class="smallimage"></li>
+        <li><img src="../images/timg-3.jpg" alt="" class="smallimage"></li>
+    </ul>
+    <script>
+        var imagelist = document.getElementById('imagelist')
+        var images = document.getElementsByClassName('smallimage')
+        for(var i = 0; i < images.length; i ++){
+            images[i].onmouseover = function(){
+                console.log(this.getAttribute('src'))
+                imageUrl = this.getAttribute('src')
+                console.log('url(' + imageUrl+ ')' + ' no-repeat;')
+                imagelist.style.background = 'url(' + imageUrl+ ')' + ' no-repeat'
+            } 
+        }
+    </script>
+</body>
+</html>

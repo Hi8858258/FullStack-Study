@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #panel{
+            width: 500px;
+            height: 300px;
+            border: 1px solid #e0e0e0;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="panel">
+        <div id="panel-title">
+            <h3>千千音乐盒</h3>
+            <hr>
+        </div>
+        <div id="panel-content">
+            <input class="item" type="checkbox">漂洋过海来看你<br>
+            <input class="item" type="checkbox">漂洋过海来看你<br>
+            <input class="item" type="checkbox">漂洋过海来看你<br>
+            <input class="item" type="checkbox">漂洋过海来看你<br>
+            <input class="item" type="checkbox">漂洋过海来看你<br>
+            <input class="item" type="checkbox">漂洋过海来看你<br>
+            <input class="item" type="checkbox">漂洋过海来看你<br>
+        </div>
+        <div id="panel-footer">
+            <hr>
+            <button id="allselect">全选</button>
+            <button id="allcancel">取消</button>
+            <button id="rever">反选</button>
+        </div>
+    </div>
+    <script>
+        var allselect = document.getElementById('allselect');
+        var allcancel = document.getElementById('allcancel');
+        var rever = document.getElementById('rever');
+        var items = document.getElementsByClassName('item');
+
+        allselect.onclick = function(){
+            for(var i = 0; i<items.length; i++){
+                items[i].checked = true;
+            }
+        }
+
+        allcancel.onclick = function(){
+            for(var i = 0; i<items.length; i++){
+                items[i].checked = false;
+            }
+        }
+
+        rever.onclick = function(){
+            for(var i = 0; i<items.length; i++){
+                items[i].checked = !items[i].checked
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1212,4 +1212,12 @@ box.onmouseout = function(){
 
 16. 放大镜效果
 
-    
+
+## 十三. js动画
+
+1. offset 家族
+   - 定位父级 offsetParent 就是元素上层的第一个定位的父元素
+   - offsetLeft;offsetTop
+   - offsetHeight;offsetWeight
+   - 元素自身有fixed定位，offsetParent就默认是null
+

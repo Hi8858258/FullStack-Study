@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+        }
+
+        #qe_code {
+            width: 180px;
+            height: 160px;
+            position: relative;
+        }
+        #qe_code #code{
+            position: absolute;
+            right: 0;
+            width: 100px;
+        }
+        #close{
+            position: absolute;
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="qe_code">
+        <img id="code" src="../images/timg-1.jpg" alt="">
+        <span id="close">X</span>
+    </div>
+    <script>
+        var close = document.getElementById("close")
+        close.onclick = function(){
+            var qe_code = document.getElementById('qe_code');
+            qe_code.remove();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="upload">
+        <label for="file">上传图片格式验证</label>
+        <input type="file" id="file">
+    </div>
+    <script>
+        //jpg png gif gif
+        var file = document.getElementById('file')
+        file.onchange = function(){
+            //通过file.value可以获得资源路径
+            var path = this.value
+            var path_list = path.split('.')
+            alert(path_list[1])
+        }
+    </script>
+</body>
+</html>

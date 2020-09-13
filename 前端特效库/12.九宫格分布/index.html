@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- 原理是通过将item浮动，然后变化父盒的宽度 -->
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        #wrapper{
+            width: 750px;
+            overflow: hidden;
+        }
+        .item{
+            float: left;
+        }
+        .imgContainer{
+            width: 200px;
+            height: 200px;
+            margin-right: 50px;
+        }
+        img{
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <div class="item">
+            <div class="imgContainer">
+                <img src="../images/timg-1.jpg" alt="">
+            </div>
+            <p class="title">风景画面</p>
+            <p class="price">￥77</p>
+        </div>
+        <div class="item">
+            <div class="imgContainer">
+                <img src="../images/timg-1.jpg" alt="">
+            </div>
+            <p class="title">风景画面</p>
+            <p class="price">￥77</p>
+        </div>
+        <div class="item">
+            <div class="imgContainer">
+                <img src="../images/timg-1.jpg" alt="">
+            </div>
+            <p class="title">风景画面</p>
+            <p class="price">￥77</p>
+        </div>
+        <div class="item">
+            <div class="imgContainer">
+                <img src="../images/timg-1.jpg" alt="">
+            </div>
+            <p class="title">风景画面</p>
+            <p class="price">￥77</p>
+        </div>
+        <div class="item">
+            <div class="imgContainer">
+                <img src="../images/timg-1.jpg" alt="">
+            </div>
+            <p class="title">风景画面</p>
+            <p class="price">￥77</p>
+        </div>
+        <div class="item">
+            <div class="imgContainer">
+                <img src="../images/timg-1.jpg" alt="">
+            </div>
+            <p class="title">风景画面</p>
+            <p class="price">￥77</p>
+        </div>
+    </div>
+</body>
+</html>
