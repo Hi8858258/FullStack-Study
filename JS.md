@@ -1,4 +1,4 @@
-# JS
+#  JS
 
 ## Js文件的引入
 
@@ -1216,8 +1216,262 @@ box.onmouseout = function(){
 ## 十三. js动画
 
 1. offset 家族
+
    - 定位父级 offsetParent 就是元素上层的第一个定位的父元素
+     - 元素自身有fixed定位，offsetParent就默认是null
+     - 元素自身没有fixed定位，offsetParent就会去找上层的定位元素
+     - body元素的offsetParent是null
    - offsetLeft;offsetTop
-   - offsetHeight;offsetWeight
-   - 元素自身有fixed定位，offsetParent就默认是null
+     - offsetTop等于当前元素的上边框到offsetParent元素上边框的距离,offsetLeft同理
+     - 当前元素的offsetParent元素是上面一个元素的话，offsetTop就等于margin-top的值
+     - 如果父元素不是定位，那就继续找
+   - offsetHeight，offsetWidth;
+     - 只读属性，不能通过box.offsetHeight = 500px来修改它们的值
+     - offsetWidth/height是把盒子的width+padding+border 之和，数值类型
+     - 和box.style.width只能获取行内样式的值，并且是字符串形式比如100px
+
+2. client 家族(客户端,主要用于获取当前页面的大小)
+
+   - 只读属性
+   - 给元素设置display:none 客户端client属性都为0
+   - 尽量避免方位client属性，会消耗很多资源
+- clientWidth
+     - width + padding
+   - clientHeight
+     - height + padding
+   - clientLeft
+   - clientTop
+   
+3. scroll 家族
+
+   - scrollheight
+
+     - 不可写 
+     - 表示元素的总高度，包含由于溢出而无法在网页上显示的
+
+   - scrollwidth
+
+     - 不可写
+     - 表示总宽度
+
+   - 无滚动条时，scrollheight就等于内容高+padding
+
+   - 有滚动条（overflow:scroll时），就要包含所有隐藏的内容了
+
+   - scrollTop
+
+     - 可读写的属性，可以通过该元素.scrollTop来实现不停向下滚动的动画
+
+     - 元素被卷起的高度，就是滚动条往下拉的时候。被隐藏到上方的内容高，可以使用
+
+       ```js
+       node.onscroll = function(){
+           //使用整个来监听scroll动作
+       }
+       ```
+
+     - 当滚动条滚动到内容底部时：
+
+       - scrollHeight = clientHeight + scrollTop
+
+   - scrollLeft
+
+     - 可读写
+     - 同scrollTop
+
+## 十四. 事件流
+
+事件流描述的是从页面中接收事件的顺序。
+
+如果点击了某个按钮上，那么点击事件不仅仅发生在按钮上，也点击了整个页面。
+
+事件顺序分别由IE和网景提出了两个完全相反的顺序
+
+1. 事件冒泡：事件自底向上传播，先有具体点击的元素接收，然后逐级向上传播，div->body（document.body对象)>html(documentElemnt对象)>文档（document对象）>windon对象
+
+   ```js
+   <div id = 'box'></div>
+   
+   var box = document.getEl('box')
+   box.onclick
+   ```
+
+2. 事件捕获
+
+   与事件冒泡完全相反
+
+3. 事件处理程序
+
+   1. HTML事件处理程序
+
+      - 直接在html里写事件代码
+
+        ```js
+        <div onclick = "test()"></div>
+        
+        <script>
+            function test(){
+            ....
+        }
+        </script>
+        ```
+
+        
+
+      - 不建议使用，html和js无分离，后期不易维护
+
+   2. DOM0级事件处理程序
+
+      - 常见的一种方法，所有浏览器都兼容 
+
+      - 在js代码中先获取元素节点，然后给这个节点对象赋予事件
+
+        ```js
+        var box = document.get....
+        box.onclick = function(){
+            ...
+        }
+        //删除事件处理程序
+        box.onclikc = null
+        ```
+
+      - 这个只能在冒泡阶段才能用
+
+      - 缺点：不能给同一个节点绑定相同的事件处理程序，否则会有覆盖现象
+
+   3. DOM2级事件处理程序
+
+      - IE8浏览器不支持这个方法
+
+      - addEventListner(事件名，处理程序函数，布尔值)。布尔值为false处于冒泡阶段，true就在捕获阶段
+
+      - removeEventListner()
+
+        ```js
+        var box = document.get....
+        box.addEventListner('click',function(){
+            this.innerHTML +=1;
+        },false)
+        ```
+
+   4. IE事件处理程序
+
+
+
+## 十五. 深入理解函数
+
+1. 函数声明语句
+
+   ```js
+   function fn(形参){
+       ...
+   }
+   ```
+
+2. 函数表达式,将匿名函数赋给一个变量
+
+   ```js
+   var hello = function(x,y){
+       return ...
+   }
+   ```
+
+3.  Function构造函数
+
+   ```js
+   new Function(形参，构造体)
+   如下
+   var fn = function('x','y','return x + y');
+   ==
+   function fn(x,y){
+       return x + y
+   }
+   ```
+
+4. 函数调用模式
+
+   this在普通函数中调用指向的是window,在构造函数中使用指向当前函数，当作对象的方法指向对象
+
+   - 函数调用模式
+
+     ```js
+     function add(x,y){
+         return x + y;
+     }
+     
+     var sum = add(3,4)
+     ```
+
+   - 方法调用模式
+
+     ```js
+     var obj = {
+         fn:function(){}
+     }
+     
+     obj.fn()
+     ```
+
+   - 构造函数调用模式
+
+     ```js
+     function fn(){}
+     var obj = new fn();
+     ```
+
+   - 间接调用模式
+
+     ```js
+     function sum(x,y){
+         return x + y;
+     }
+     console.log(sum.call(obj,1,2 ))
+     ```
+
+5. 函数参数
+
+   函数自带的arguments不是一个真正的数组，只能说类似。当需要传的实参比形参多的时候，就可以用arguments来
+
+6. 函数属性
+
+   - length属性
+
+   ```js
+   function add(x,y){
+       console.log(arguments.length);//实参的个数   4
+       console.log(add.length);//形参的个数  2
+   }
+   add(2,3,4,5)
+   ```
+
+   - name属性
+
+     当前函数的名字
+
+   - prototype属性
+
+     每一个函数都有一个prototype属性,这是一个原型链（对象）。意思就是 函数对象.prototype是函数对象的父对象，所以函数.prototype拥有的方法和属性，函数也会拥有
+
+7. 函数方法
+
+   - apply(),call()。这两个方法都不是继承来的
+
+     ```js
+     window.color = 'red';
+     var obj = {color:'blue'};
+     function sayColor(){
+         console.log(this.color);
+     }
+     sayColor(); //red .因为普通函数的this指向window
+     sayColor.call(this); //red
+     sayColor.call(window);//red
+     sayColor.call(obj); //blue
+     
+     ```
+
+     
+
+
+
+
 

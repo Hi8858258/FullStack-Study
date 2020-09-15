@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #back{
+            position: fixed;
+            bottom: 0;
+            right: 0;
+        }
+    </style>
+</head>
+<body style="height: 2000px;">
+    <button id="back">回到顶部</button>
+    <script>
+        window.onscroll = function(){
+            console.log(document.documentElement.scrollTop)
+        }
+        var btn = document.getElementById('back')
+        btn.onclick = function(){
+            scrollTo(0,0)
+        }
+    </script>
+</body>
+</html>
