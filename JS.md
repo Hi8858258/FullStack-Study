@@ -1454,7 +1454,7 @@ box.onmouseout = function(){
 
 7. 函数方法
 
-   - apply(),call()。这两个方法都不是继承来的
+   - apply(),call()。这两个方法都不是继承来的，函数本身有的。可以改变函数内部this的指向对象
 
      ```js
      window.color = 'red';
@@ -1463,13 +1463,394 @@ box.onmouseout = function(){
          console.log(this.color);
      }
      sayColor(); //red .因为普通函数的this指向window
-     sayColor.call(this); //red
-     sayColor.call(window);//red
-     sayColor.call(obj); //blue
+     sayColor.call(this); //red，this指向window
+     sayColor.call(window);//red,this指向window
+     sayColor.call(obj); //blue,this指向obj
+     ```
      
+   - call和apply的区别
+
+     - call（{}，1，2，3）。call第一个参数是对象，后面是一个个数字
+     - apply({},[])。apply第一个参数也是对象，但后面可以跟数组
+
+   - 在非严格模式下，给call/apply传入一个null或者undefined会被指向window这个全局对象
+
+   - 在严格模式下，传什么就指向什么。比如传null就会指向null对象
+
+   - call和apply方法的应用
+
+     - 找出数组的最大元素配合
+       
+       - Math.max(数字1，数字2，数字3)
+       - Math.max.apply(null.[2,3,4,5])求数组的最大元素
+       
+     - 将类数组对象转换成真正的数组
+
+       - 类数组就相当于函数中的arguments对象
+         - 使用Array.prototype.slice.apply(arguments)可以把arguments变成真实的数组
+
+     - 数组追加
+
+       ```js
+       var arr = []
+       Array.prototype.push.apply(arr,[1,2,3,4])//将[1，2，3，4]push到arr中
+       Array.prototype.push.apply(arr,[8,9,0])//[1,2,3,4,8,9,0]
+       ```
+
+     - 利用call和apply做继承
+
+       ```js
+       function Animail(name,age){
+           //这是一个类
+           this.name = name;//类属性
+           this.age = age;//类属性
+           this.sayAge = function(){
+               console.log(this.age)
+           }
+       }
+       
+       function Cat(name,age){
+        //这是一个子类  
+           Animal.call(this,name,age)//把this指向了cat实例
+       }
+       
+       //实例化Cat
+       var c = new Cat('小花',20);
+       c.sayAge();
+       ```
+
+     - 使用log代理console.log()
+
+   - bind方法
+
+     - es5新增
+
+     - 主要作用：将函数绑定到某个对象中，并且有返回值（一个函数）
+
+       ```js
+       function fn(y){
+           return this.x + y;
+       }
+       var obj = {
+           x:1
+       }
+       var gn = fn.bind(obj)
+       gn(3)
+       //上面的过程就是，先把fn绑定给obj对象，这个时候fn中的this会改变指向obj。然后bind会返回一个函数其实是fn给gn。所以调用gn(3)的时候，其实是在调用obj对象里的fn
+       ```
+
+     - 这是常见的函数式编程技术-函数柯里化 
+
+       ```js
+       function getConfig(colors,size,otherOperations){
+           console.log(colors,size,otherOperations)
+       }
+       var defaultConfig = getConfig.bind(null,'heise',1000);
+       
+       defaultConfig('123');>> heise,1000,123
+       defaultConfig('456');>> heise,1000,456
+       //相当于是给函数赋予了默认方法，框架里使用的较多
+       ```
+
+## 十六.作用域
+
+1. 作用域的内部原理
+
+   - 全局作用域
+   - 函数作用域，可以相互嵌套
+   - 作用域内部原理的5个阶段：编译（解释），执行，查询，嵌套，异常
+
+2. 编译（解释阶段）
+
+   编译也有两个阶段：
+
+   - 分词
+
+     ```js
+     var a = 2;
+     //词法单元：var,a, =,2,;
+     //js会把词法单元放到一个对象里
+     {
+         "var":"keyword"//关键词
+         "a":"indentifier"//标识符
+         "=":"assignment"，//分配
+         "2":"interger",//整数
+         ";":"eos" //end of statement结束语句
+     }
      ```
 
+   - 解析
+
+     ```js
+     //分词结束后，就会对对象进行解析。解析时成抽象语法树AST。var a = 2;语句是根，等号是中间的子树，等号左边的var,a,是左子树，等号右边2，；是右子树
+     ```
+
+   - 代码生成
+
+     ```js
+     //将AST转换成可执行的代码的过程，转换成一组机器指令
+     ```
+
+3. 执行阶段
+
+   - 引擎运行代码时首先查找当前的作用域，看a变量是否在当前的作用域，如果在，引擎会直接使用变量；如果否，引擎会继续查找；
+   - 如果找到了变量，就会将2赋值给当前变量，否则就会抛出异常
+
+4. 查询
+
+   - LHS，RHS实际看视频
+
+5. 嵌套（作用域变量的查找机制）
+
+   ```js
+   function foo(a){
+       console.log(a + b);//函数作用域里没有b这个变量，引擎就会到外层作用域里去找这个变量，找不到就会异常
+   }
+   var b = 2;//变量声明提升
+   foo(4);
+   ```
+
+6. 异常（了解）
+
+7. 词法作用域
+
+   ```js
+   function foo(a){
+       var b = a * 2;
+       function bar(c){
+           console.log(a,b,c) //2,4,12
+       }
+       bar( b*3 )
+   }
+   
+   foo(2);
+   
+   //一共有3层作用域：
+   //第一层是全局作用域，含有foo这个词
+   //第二层是foo函数里面的，有b，a,bar这三个词
+   //第三层就是bar函数里面的，有c这个词
+   ```
+
+   - 遮蔽效应
+
+     - 作用域查找从运行时所处的最内部作用域开始，逐级向上进行，直到遇到第一个匹配的标识符为止
+
+     - 在多层的嵌套作用域可以定义同名的标识符，这叫做遮蔽
+
+       ```js
+       var a = 0;
+       function test(){
+           var a = 1; 
+           console.log(a); 
+       }
+       //test()执行函数test的时候，作用域查找就是从test函数开始，当在函数中找到a变量的时候，就不会再往上查找
+       ```
+
+   - 变量的声明提升
+
+     ```js
+     a = 2;
+     var a;
+     console.log(a);//可以执行，不会报错但显示undefined，其实就等于下面这个情况
+     var a;//变量被提升到最上面
+     console.log(a);//显示undifined
+     a = 2;
+     //这是预解释现象
+     ```
+
+   - 函数的声明提升
+
+     ```js
+     foo();
+     function foo(){
+         console.log(1);
+     }//这段代码可以执行，显示1
      
+     foo()
+     var foo = function(){
+         console.log(1)
+     }//函数表达式不能提升，会显示foo不是一个function
+     ```
+
+   - 声明的注意事项
+
+     - 变量声明和函数声明，变量的声明会先于函数声明，函数的声明会覆盖未定义（未赋值）的同名变量
+
+       ```js
+       var a;
+       function a (){}
+       console.log(a) >>> //会显示函数
+           
+       var a = 10;
+       function a (){}
+       console.log(a) >>>>//会显示10,因a变量定义了
+       ```
+
+   - 作用域链
+
+     下面的作用域链就是 bar->fn->全局，标识符解析就是沿着作用域链一级一级地搜索标识符的过程，而作用域链就是保证对变量和函数的有序访问
+
+     ```js
+     var a = 1;
+     var b = 2;
+     function fn(x){
+         var a = 10;
+         function bar(x){
+             var a =100;
+             b = x + a; //b是自由变量
+             return b
+         }
+         bar(20);
+         console.log(b);
+         bar(200);
+         console.log(b);
+     }
+     fn(0)
+     ```
+
+   - 自由变量：在当前作用域中存在，但未在当前作用域中声明的变量（在上级或全局作用域存在）。如上面bar函数中的b变量
+
+   - 执行环境和执行流
+
+     - 执行环境也叫执行上下文
+     
+     - 每个执行环境都有一个与之关联的变量对象，环境中定义的函数和变量都保存在这个对象中
+     
+       ```js
+       //比如上面的fn(0)执行环境就是一个变量对象，包含了这个函数的所有变量：
+       {
+           x:0;
+           a:undefined;
+           bar:function;
+           arguments:[0];
+           this:window;
+       }
+       ```
+     
+   - 执行环境栈
+
+     ```js
+     //比如上面的fn(0),首先是全局执行环境入栈，随着fn函数的调用，会顺着执行流，将fn函数的执行环境入栈，然后再把bar函数的执行环境入栈，当函数执行完毕，就再依次出栈，最后将执行环境交还给全局环境
+     ```
+
+   总结：
+
+   - 在js中，除了全局作用域，每个函数都有自己的作用域
+   - 作用域在函数定义的时候就已经确定了，与函数调用无关
+   - 通过作用域，可以查找作用域范围内的变量和函数有哪些，却不知道变量的值是什么，所以作用域是静态的
+   - 对于函数来说，执行环境是函数调用时候确定的，执行环境中包含作用域内的所有变量和函数。在同一个作用于下，不同的调用会产生不同的执行环境，比如上面的bar(20),bar(200)。所以执行环境是动态的
+
+## 十七. 闭包
+
+### 17.1 理解闭包
+
+定义：一般来说函数外部是不能访问到函数内部的变量的，如下
+
+```js
+function fn1(){
+    var b = 234
+    console.log('内部')
+}
+console.log(b)//这个会报错
+```
+
+但通过闭包，可以实现从外部访问内部的变量，原理就是在函数内部嵌套一个函数
+
+```js
+function fn1(){
+    var b = 123;
+    function fn2(){
+        console.log(b)
+    }
+    return fn2
+}
+var result = fn1();
+result()
+```
+
+闭包最大的特点是可以记住它诞生的执行环境，所以fn2可以得到fn1中的内部变量
+
+### 17.2 闭包的用途   
+
+1. 计数器
+
+   ```js
+   function a(){
+       var start = 0;
+       function b(){
+           return start++;
+       }
+       return b;
+   }
+   var inc = a();
+   console.log(inc()) >>> 1
+   console.log(inc()) >>> 2
+   //当调用inc的时候，实际是在调用函数b，每次调用函数b执行环境其实都是在a函数中，所以a函数中的start会随着inc的调用而不断改变
+   //当不需要使用闭包的时候，要记得释放当前的变量防止内存泄漏
+   inc = null;
+   ```
+
+2. 封装对象的私有属性和方法
+
+   ```js
+   function Person(name){
+       //私有属性
+       var age;
+       //私有方法
+       function setAge(n){
+           age = n;
+       }
+       function getAge(){
+           return age;
+       }
+       return {
+           name:name,
+           setAge:setAge,
+           getAge:getAge
+       }
+   }
+   
+   var p1 = Person('mjj') //返回一个对象，对象里面有name属性，setAge和getAge方法
+   p1.setAge(18),
+   console.lo(p1.getAge())//
+   p1 = null;//一定要释放
+   ```
+
+3. 闭包注意点 
+
+   - 使用闭包使得函数中的变量始终在内存中，内存消耗很大，所以不能滥用闭包，否则会造成页面的性能问题
+   -  闭包需要的三个条件
+     - 函数嵌套
+     - 访问所在的作用域
+     - 所在作用域外被调用
+
+## 十八. 立即执行函数（IIFF）
+
+定义函数之后，立即调用该函数，这种函数叫做立即执行函数
+
+- 如果function出现在行首，一律解释成声明语句，解决这种问题的一个方式就是用括号，括号js会当成表达式
+
+  ```js
+  (function (){})();
+  //这就是IIF，用括号把函数包围起来了
+  (function(){}());//这也可以
+  ```
+
+- IIFF应用，可以当作闭包使用，封装私有的属性
+
+  - 计数器
+
+    ```js
+    //需求：每次调用add,都返回加1的数字
+    var add = (function(){
+        var count = 0;
+        return function (){
+            return count++;
+        }
+    })();
+    ```
+
+    
 
 
 
