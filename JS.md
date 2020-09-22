@@ -1821,10 +1821,14 @@ result()
    - 使用闭包使得函数中的变量始终在内存中，内存消耗很大，所以不能滥用闭包，否则会造成页面的性能问题
    -  闭包需要的三个条件
      - 函数嵌套
+     
      - 访问所在的作用域
+     
      - 所在作用域外被调用
+     
+       
 
-## 十八. 立即执行函数（IIFF）
+4. 立即执行函数（IIFF）
 
 定义函数之后，立即调用该函数，这种函数叫做立即执行函数
 
@@ -1850,9 +1854,318 @@ result()
     })();
     ```
 
-    
+- 对循环和闭包的错误理解
+
+  ```js
+  function foo(){
+      var arr = [];
+      for(var i = 0; i < 0; i++){
+          //由于for循环中的i（foo函数作用域下）和return的i不再一个作用域中，所以每次返回的i都是循环完成后的
+          arr[i] = function(){
+              return i;
+          }
+      }
+      return arr;
+  }
+  var bar = foo();
+  console.log(bar[0]());>>10
+  console.log(bar[5]());>>10
+  
+  //解决的方案是在arr[i]函数外面嵌套一个函数，形成闭包
+  function foo(){
+      var arr = [];
+      for(var i = 0; i < 0; i++){
+          arr[i] = (function(n){
+              //n接收到了实参
+              return function(){
+                  return n
+              }
+          })(i);//这个是给自执行函数传的实参
+      }
+      return arr;
+  }
+  ```
+
+5. 闭包的10种表现形式
+
+   1. 返回值 (最常见的一种形式)
+
+      ```js
+      var fn = function(){
+          var name = 'mjj'
+          return function(){
+              return name;
+          }
+      }
+      var fnc = fn()
+      ```
+
+   2. 函数赋值(将内部的函数，赋值给外部的变量)
+
+      ```js
+      var fn2;
+      var fn = function(){
+          var name = 'mjj'
+          var a = function(){
+              return name;
+          }
+          fn2 = a;
+      }
+      fn();//先执行fn，fn会执行fn2=a，fn2就被赋值成了a函数
+      cosole.log(fn2())//这样fn2()就可以使用内部的函数了
+      ```
+
+   3. 函数参数
+
+      ```js
+      var fn2 = function(f){
+          console.log(f()) 
+      }
+      
+      function fn(){
+          var name = 'mjj';
+          var a = function(){
+              return name;
+          }
+          fn2(a);
+      }
+      
+      fn();//1.外部调用fn，就会去执行fn2(a),a函数就会被传递到fn2里面去，这样就相当于是把一个a函数的参数传到另一个函数里面去了
+      ```
+
+   4. IIFF
+
+      ```js
+      //和上面的类似，只是利用自执行函数省略了调用函数的代码
+      var fn3 = function(f){
+          console.log(f())
+      }
+      
+      (function(){
+          var name = 'mjj';
+          var a = function(){
+              return name;
+          }
+          fn3(a);
+      })()
+      ```
+
+   5. 循环赋值
+
+      ```js
+      function foo(){
+          var arr = [];
+          for(var i = 0; i<10;i++){
+              (function(i){
+                  arr[i] = function(){
+                      return i;
+                  }
+              })(i);
+          }
+      }
+      ```
+
+   6. getter和setter函数来将要保存的函数放在内部
+
+      ```js
+      var getValue,setValue;
+      (function(){
+          var num = 0;
+          getValue = function(){
+              return num;
+          }
+          setValue = function(n){
+              if(typeof n ==='numbser'){
+              	num = n
+              }
+          }
+      })();
+      console.log(getValue());
+      setValue(10)
+      ```
+
+   7. 迭代器
+
+      ```js
+      //计数器   
+      var add = function(){
+          var num = 0;
+          return function(){
+              return num++;
+          }
+      }();
+      console.log(add())
+      
+      //迭代器实现
+      //['mss','like','ss']
+      var setUp = function(arr){
+          var i = 0;
+          return function(){
+             	return arr[i++];
+          }
+      }
+      var next = setUp(['mss','like','ss'])
+      
+      console.log(next());>>>mss
+      console.log(next());>>>like
+      ```
+
+   8. 区分是不是首次调用
+
+      ```js
+      var firstload = (function(){
+          var n = 0
+          return function(){
+              if(n === 0){
+                  n++;
+                  return true
+              }else{
+                  return false
+              }
+          }
+      })();
+      
+      firstload();>>>true
+      firstload();>>>false
+      ```
+
+   9. 缓存机制
+
+      - 未加入缓存
+
+      ```js
+      function mult(){
+          var sum =0;
+          for(var i = 0;i< argument.length;i++){
+              sum = sum + arguments[i];
+          }
+          return sum;
+      }
+      
+      console.log(mult(1,2,3));>>>//显示6
+      console.log(mult(1,2,3));>>>//显示6
+      //因为没有加入缓存，所以两次调用都会去执行函数
+      ```
+
+      - 加入缓存
+
+      ```js
+      //看视频
+      ```
+
+   10. img对象图片上报
+
+## 十八. this
+
+1. this的绑定规则 - 默认绑定
+
+   - this默认指向window
+
+     - 全局环境下的this指向了window
+
+     - 函数独立调用(函数挂载在window对象下)，函数内部的this也指向了window
+
+     - 被嵌套的函数独立调用时，this也指向window
+
+       ```js
+       var a = 0
+       var obj = {
+           a:2,
+           foo:function(){
+               function test(){
+                   console.log(this.a)
+               }
+               test()
+           }
+       }
+       obj.foo();>>>0
+       
+       //函数作为对象的方法时，this就会指向当前的对象
+       var a = 0
+       var obj = {
+           a:2,
+           foo:function(){
+               var that = this
+               function test(){
+                   console.log(that.a)
+               }
+               test()
+           }
+       }
+       obj.foo();>>>2
+       
+       ```
+
+     - IIFE函数中的this也指向window
+
+     - 闭包默认this指向window  
+
+2. this隐式绑定
 
 
+
+## 十九.js面向对象
+
+1. 对象是什么
+
+   - 对象是单个实物的抽象
+
+2. 构造函数
+
+   定义：js不是基于类的，而是基于构造函数constructor和原型链prototype
+
+   ```js
+   function Dog(name,age){
+       //这就是一个构造函数，为了和普通函数区别，函数名的第一个通常大写
+       //函数体内的this代表了索要生成的实例对象
+       this.name = name;
+       this.age = age
+   }
+   //必须使用new关键字来实例化对象
+   var dog1 = new Dog('阿黄',10);
+   //如果不写new，就相当于是使用普通函数，但是可以使用instanceof来纠正new关键字忽略的情况，如下
+   
+   function Dog(name){
+       if(!(this instanceof Dog)){
+           //如果实例化的时候没用new，this就会指向window
+           return new Dog(name)
+       }else{
+           this.name = name
+       }
+   }
+   var d1 = Dog('kk')
+   ```
+
+   1. new 命令内部原理
+
+      ```js
+      //1.创建一个空对象，作为将要返回的对象实例
+      //2.将这个空的对象原型对象，指向了构造函数的prototype属性对象
+      //3.将这个实例对象的值赋值给函数内部的this关键词
+      //4.执行构造函数体内的代码
+      function Persion(name){
+          this.name = name
+      }
+      var p1 = new Person();
+      
+      console.log(p1.__proto__ === Person.prototype);>>>true
+      ```
+
+      
+
+   2. constructor
+
+3. 原型对象
+
+4. 创建对象的5种模式
+
+   1. 对象字面量
+   2. 工厂模式
+   3. 构造函数模式
+   4. 原型模式
+   5. 组合模式
+
+5. 实现继承的5种方式
 
 
 
