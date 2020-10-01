@@ -364,6 +364,16 @@ console.log(ss(2,3))
 
 ```
 
+### 5.4 回调函数
+
+回调函数就是没有被调用，但是依然执行的函数，回调函数有3个特点
+
+1. 你定义的
+2. 没有调用
+3. 最终执行了
+
+常见的回调函数有setTimeout里面的函数，和dom里面的事件函数，ajax请求，生命周期
+
 ## 六. 对象
 
 ```js
@@ -1454,7 +1464,7 @@ box.onmouseout = function(){
 
 7. 函数方法
 
-   - apply(),call()。这两个方法都不是继承来的，函数本身有的。可以改变函数内部this的指向对象
+   - apply(),call()。这两个方法都不是继承来的，函数本身有的。可以改变函数内部this的指向对象，另一个意思是让函数变成指定对象的方法
 
      ```js
      window.color = 'red';
@@ -2059,11 +2069,13 @@ result()
 
 1. this的绑定规则 - 默认绑定
 
+   任何函数在没有指定前其实都是挂载在window对象下的，所以这也是为什么在对象下的this指向对象，而函数的this指向window
+
    - this默认指向window
 
      - 全局环境下的this指向了window
 
-     - 函数独立调用(函数挂载在window对象下)，函数内部的this也指向了window
+     -  函数独立调用(函数挂载在window对象下)，函数内部的this也指向了window
 
      - 被嵌套的函数独立调用时，this也指向window
 
@@ -2145,17 +2157,46 @@ result()
       //4.执行构造函数体内的代码
       function Persion(name){
           this.name = name
+          this.sayName = function(){
+              console.log(this.name)
+          }
       }
       var p1 = new Person();
       
       console.log(p1.__proto__ === Person.prototype);>>>true
       ```
 
-      
-
    2. constructor
 
+      每个对象在创建时都会自动拥有一个构造函数属性constructor，这个constructor是通过继承关系继承来的，它指向了构造函数
+
+   3. 使用构造函数的利与弊
+
+      - 好处就是每个对象都可以拥有自己的属性和方法
+
+      - 坏处就是，不同对象的相同方法都会被创建，消耗内存，可以使用原型对象避免
+
 3. 原型对象
+
+   - 原型对象
+
+   一个构造函数的prototype     Foo.prototype。其实所有函数都有一个prototype属性，它默认指向一个objec
+
+   - 实例对象
+
+   f1/f2就是实例两个拥有不同内存地址的对象，
+
+   - 构造函数
+
+   ```js
+   //用来初始化新创建对象的函数，Foo是构造函数，它有一个属性prototype（原型属性），指向实例的__proto__属性
+   
+   function Foo(){};
+   Foo.prototype.name = 'mjj'//mjj就是通过原型对象来赋予方法的，可以理解成python的类属性，类方法
+   
+   var f1 = new Foo();
+   var f2 = new Foo();
+   ```
 
 4. 创建对象的5种模式
 
